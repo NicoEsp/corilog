@@ -12,7 +12,7 @@ const Header = ({ onAddMoment }: HeaderProps) => {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-serif-elegant text-sage-800 mb-1">
-            Corinalog
+            Corilog
           </h1>
           <p className="text-sm text-sage-600 handwritten">
             Momentos que atesoro
