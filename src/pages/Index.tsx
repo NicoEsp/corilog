@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
@@ -5,50 +6,33 @@ import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import { Button } from '@/components/ui/button';
 import { Camera, BookOpen } from 'lucide-react';
-
-interface Moment {
-  id: string;
-  title: string;
-  note: string;
-  date: Date;
-  photo?: string;
-}
+import { useMoments } from '@/hooks/useMoments';
 
 const Index = () => {
-  const [moments, setMoments] = useState<Moment[]>([
-    {
-      id: '1',
-      title: 'Primera sonrisa',
-      note: 'Hoy Corina me regaló su primera sonrisa consciente. Era como si todo el mundo se iluminara de repente. Estaba cambiándole el pañal y de repente sus ojitos se arrugaron y apareció esa sonrisa perfecta que me derritió el corazón.',
-      date: new Date('2024-02-15'),
-    },
-    {
-      id: '2',
-      title: 'Primer diente',
-      note: 'Apareció su primer dientito! Lo descubrí cuando estaba bostezando. Tan pequeñito y perfecto.',
-      date: new Date('2024-04-22'),
-    },
-    {
-      id: '3',
-      title: 'Primeras risas',
-      note: 'Sus primeras carcajadas llegaron mientras jugábamos a "cu-cu tras". El sonido más hermoso del mundo.',
-      date: new Date('2024-03-10'),
-    }
-  ]);
-  
+  const { moments, loading, addMoment } = useMoments();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
+  const [selectedMoment, setSelectedMoment] = useState<any>(null);
 
-  const handleAddMoment = (newMoment: Omit<Moment, 'id'>) => {
-    const moment: Moment = {
-      id: Date.now().toString(),
-      ...newMoment
-    };
-    setMoments(prev => [moment, ...prev]);
-    setShowAddForm(false);
+  const handleAddMoment = async (newMoment: any) => {
+    const success = await addMoment(newMoment);
+    if (success) {
+      setShowAddForm(false);
+    }
   };
 
-  const sortedMoments = [...moments].sort((a, b) => b.date.getTime() - a.date.getTime());
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header onAddMoment={() => setShowAddForm(true)} />
+        <main className="container mx-auto px-4 py-8">
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600 mx-auto mb-4"></div>
+            <p className="text-sage-600 handwritten">Cargando tus momentos...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (selectedMoment) {
     return (
@@ -99,7 +83,7 @@ const Index = () => {
             </div>
             
             <div className="space-y-6">
-              {sortedMoments.map((moment, index) => (
+              {moments.map((moment, index) => (
                 <div
                   key={moment.id}
                   className="animate-fade-in"
