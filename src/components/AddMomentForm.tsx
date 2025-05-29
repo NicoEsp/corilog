@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Camera, Note, Check, Arrow } from 'lucide-react';
+import { Camera, BookOpen, Check, ArrowLeft } from 'lucide-react';
 
 interface AddMomentFormProps {
   onSave: (moment: { title: string; note: string; date: Date; photo?: string }) => void;

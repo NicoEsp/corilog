@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import { Button } from '@/components/ui/button';
-import { Camera, Note } from 'lucide-react';
+import { Camera, BookOpen } from 'lucide-react';
 
 interface Moment {
   id: string;
@@ -68,7 +67,7 @@ const Index = () => {
         {moments.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-24 h-24 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-8 animate-gentle-bounce">
-              <Note className="w-8 h-8 text-sage-400" />
+              <BookOpen className="w-8 h-8 text-sage-400" />
             </div>
             
             <h2 className="text-2xl font-serif-elegant text-sage-800 mb-4">

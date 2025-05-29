@@ -1,5 +1,5 @@
 
-import { Camera, Note } from 'lucide-react';
+import { Camera, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
