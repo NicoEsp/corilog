@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -133,6 +132,42 @@ export const useMoments = () => {
     }
   };
 
+  // Eliminar momento
+  const deleteMoment = async (momentId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('moments')
+        .delete()
+        .eq('id', momentId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        logError(error, 'delete_moment');
+        toast({
+          title: "Error",
+          description: getSecureErrorMessage(error),
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Actualizar estado local
+      setMoments(prev => prev.filter(moment => moment.id !== momentId));
+      
+      toast({
+        title: "Momento eliminado",
+        description: "Tu momento ha sido eliminado exitosamente",
+      });
+
+      return true;
+    } catch (error) {
+      logError(error, 'delete_moment_general');
+      return false;
+    }
+  };
+
   // Migrar momentos desde localStorage (solo una vez)
   const migrateMomentsFromLocalStorage = async () => {
     if (!user) return;
@@ -199,6 +234,7 @@ export const useMoments = () => {
     moments,
     loading,
     addMoment,
+    deleteMoment,
     refetch: fetchMoments
   };
 };

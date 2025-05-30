@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Camera, BookOpen, Check, ArrowLeft } from 'lucide-react';
+import { Camera, Check, X } from 'lucide-react';
 
 interface AddMomentFormProps {
   onSave: (moment: { title: string; note: string; date: Date; photo?: string }) => void;
@@ -40,16 +41,27 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-card paper-texture gentle-shadow border-sage-200/50 animate-fade-in">
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="text-center">
-            <h2 className="text-xl font-serif-elegant text-sage-800 mb-2">
-              Nuevo momento
-            </h2>
-            <p className="text-sm text-sage-600 handwritten">
-              Captura este instante especial
-            </p>
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <Card className="w-full max-w-md bg-card paper-texture gentle-shadow border-sage-200/50 animate-fade-in rounded-t-xl sm:rounded-xl rounded-b-none sm:rounded-b-xl max-h-[90vh] sm:max-h-none overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          {/* Header mejorado para móvil */}
+          <div className="flex items-center justify-between sm:block">
+            <div className="text-center flex-1 sm:mb-0">
+              <h2 className="text-lg sm:text-xl font-serif-elegant text-sage-800 mb-1 sm:mb-2">
+                Nuevo momento
+              </h2>
+              <p className="text-sm text-sage-600 handwritten hidden sm:block">
+                Captura este instante especial
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              className="sm:hidden h-8 w-8 p-0 text-sage-500"
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
 
           <div className="space-y-4">
@@ -61,7 +73,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Primera sonrisa, primer diente..."
-                className="bg-cream-50 border-sage-200 focus:border-rose-300"
+                className="bg-cream-50 border-sage-200 focus:border-rose-300 text-base"
                 required
               />
             </div>
@@ -74,7 +86,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-cream-50 border-sage-200 focus:border-rose-300"
+                className="bg-cream-50 border-sage-200 focus:border-rose-300 text-base"
               />
             </div>
 
@@ -86,7 +98,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Describe este momento especial..."
-                className="bg-cream-50 border-sage-200 focus:border-rose-300 resize-none"
+                className="bg-cream-50 border-sage-200 focus:border-rose-300 resize-none text-base"
                 rows={3}
               />
             </div>
@@ -105,7 +117,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 />
                 <label
                   htmlFor="photo-upload"
-                  className="flex-1 flex items-center justify-center gap-2 p-3 border border-sage-200 rounded-lg bg-cream-50 cursor-pointer hover:bg-cream-100 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 p-3 border border-sage-200 rounded-lg bg-cream-50 cursor-pointer hover:bg-cream-100 transition-colors touch-manipulation"
                 >
                   <Camera className="w-4 h-4 text-sage-500" />
                   <span className="text-sm text-sage-600">
@@ -119,7 +131,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                   <img 
                     src={photo} 
                     alt="Vista previa" 
-                    className="w-20 h-20 rounded-lg object-cover"
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"
                   />
                 </div>
               )}
@@ -131,13 +143,13 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="flex-1 border-sage-300 text-sage-600 hover:bg-sage-50"
+              className="flex-1 border-sage-300 text-sage-600 hover:bg-sage-50 h-11 text-base hidden sm:flex"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-rose-400 hover:bg-rose-500 text-white"
+              className="flex-1 sm:flex-1 bg-rose-400 hover:bg-rose-500 text-white h-11 text-base touch-manipulation"
               disabled={!title.trim()}
             >
               <Check className="w-4 h-4 mr-2" />
