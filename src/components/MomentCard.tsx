@@ -69,7 +69,7 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
               {moment.title}
             </h3>
             
-            <p className="text-sage-600 text-sm mb-2 sm:mb-3 line-clamp-2">
+            <p className="text-sage-600 text-sm mb-2 sm:mb-3 line-clamp-2 whitespace-pre-wrap">
               {moment.note}
             </p>
             
