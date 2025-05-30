@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/utils/errorHandling';
 
 interface AuthContextType {
   user: User | null;
@@ -20,35 +21,110 @@ export const useAuth = () => {
   return context;
 };
 
+// Clean up auth state utility
+const cleanupAuthState = () => {
+  try {
+    // Remove all Supabase auth keys from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Remove from sessionStorage if available
+    if (typeof sessionStorage !== 'undefined') {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  } catch (error) {
+    logError(error, 'cleanup_auth_state');
+  }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     // Configurar listener de cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state change:', event);
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Handle specific auth events
+        if (event === 'SIGNED_OUT') {
+          cleanupAuthState();
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in:', session.user.email);
+        }
       }
     );
 
     // Verificar sesión existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          logError(error, 'get_session');
+        }
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        logError(error, 'check_session');
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    checkSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
+    try {
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        logError(error, 'sign_out');
+        console.error('Error signing out:', error);
+      }
+      
+      // Force page reload for clean state
+      window.location.href = '/auth';
+    } catch (error) {
+      logError(error, 'sign_out_general');
+      
+      // Force cleanup and redirect even if signOut fails
+      cleanupAuthState();
+      window.location.href = '/auth';
     }
   };
 

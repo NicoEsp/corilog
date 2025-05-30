@@ -4,10 +4,15 @@ import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { BookOpen, Camera, Lock, Mail } from 'lucide-react';
+import { BookOpen, Camera, Lock, Mail, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
+import { validatePassword } from '@/utils/passwordValidation';
+import { validateEmail } from '@/utils/inputSanitization';
+import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
+import { authRateLimiter } from '@/utils/rateLimiting';
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -15,36 +20,88 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   // Redirigir si ya está autenticado
   if (!loading && user) {
     return <Navigate to="/" replace />;
   }
 
+  const validateForm = (): boolean => {
+    let isValid = true;
+    setEmailError('');
+    setPasswordError('');
+
+    // Validate email
+    if (!email || !validateEmail(email)) {
+      setEmailError('Por favor ingresa un email válido');
+      isValid = false;
+    }
+
+    // Validate password
+    if (!password) {
+      setPasswordError('La contraseña es requerida');
+      isValid = false;
+    } else if (!isLogin) {
+      // For registration, check password strength
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        setPasswordError('La contraseña no cumple con los requisitos de seguridad');
+        isValid = false;
+      }
+    } else if (password.length < 6) {
+      // For login, minimum length check
+      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    
+    if (!validateForm()) return;
+
+    // Check rate limiting
+    const rateLimitKey = `auth_${email}`;
+    if (authRateLimiter.isBlocked(rateLimitKey)) {
+      const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
+      toast({
+        title: "Demasiados intentos",
+        description: `Espera ${remainingTime} minutos antes de intentar nuevamente`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         });
         
         if (error) {
-          if (error.message.includes('Invalid login credentials')) {
+          // Record failed attempt
+          const { blocked } = authRateLimiter.recordAttempt(rateLimitKey);
+          
+          logError(error, 'auth_signin');
+          
+          if (blocked) {
+            const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
             toast({
-              title: "Error de inicio de sesión",
-              description: "Email o contraseña incorrectos",
+              title: "Cuenta temporalmente bloqueada",
+              description: `Demasiados intentos fallidos. Espera ${remainingTime} minutos.`,
               variant: "destructive",
             });
           } else {
             toast({
-              title: "Error",
-              description: error.message,
+              title: "Error de inicio de sesión",
+              description: getSecureErrorMessage(error),
               variant: "destructive",
             });
           }
@@ -56,24 +113,17 @@ const Auth = () => {
         }
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         });
         
         if (error) {
-          if (error.message.includes('User already registered')) {
-            toast({
-              title: "Usuario ya existe",
-              description: "Este email ya está registrado. Intenta iniciar sesión.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Error",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
+          logError(error, 'auth_signup');
+          toast({
+            title: "Error de registro",
+            description: getSecureErrorMessage(error),
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "¡Cuenta creada!",
@@ -82,9 +132,10 @@ const Auth = () => {
         }
       }
     } catch (error) {
+      logError(error, 'auth_general');
       toast({
         title: "Error inesperado",
-        description: "Ocurrió un error. Intenta nuevamente.",
+        description: getSecureErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -139,12 +190,23 @@ const Auth = () => {
                   <Input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError('');
+                    }}
                     placeholder="tu@email.com"
-                    className="pl-10 bg-cream-50 border-sage-200 focus:border-rose-300"
+                    className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${
+                      emailError ? 'border-red-300' : ''
+                    }`}
                     required
+                    autoComplete="email"
                   />
                 </div>
+                {emailError && (
+                  <p className="text-xs text-red-600 mt-1 handwritten">
+                    {emailError}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -156,13 +218,43 @@ const Auth = () => {
                   <Input
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError('');
+                    }}
                     placeholder="••••••••"
-                    className="pl-10 bg-cream-50 border-sage-200 focus:border-rose-300"
+                    className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${
+                      passwordError ? 'border-red-300' : ''
+                    }`}
                     required
-                    minLength={6}
+                    minLength={isLogin ? 6 : 12}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
                   />
                 </div>
+                {passwordError && (
+                  <p className="text-xs text-red-600 mt-1 handwritten">
+                    {passwordError}
+                  </p>
+                )}
+                
+                {/* Password strength indicator for registration */}
+                {!isLogin && password && (
+                  <div className="mt-2">
+                    <PasswordStrengthIndicator password={password} />
+                  </div>
+                )}
+                
+                {/* Security notice for registration */}
+                {!isLogin && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-blue-700 handwritten">
+                        Tu contraseña debe tener al menos 12 caracteres e incluir mayúsculas, minúsculas, números y símbolos.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -188,7 +280,11 @@ const Auth = () => {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setEmailError('');
+                    setPasswordError('');
+                  }}
                   className="text-sm text-sage-600 hover:text-sage-800 underline handwritten"
                 >
                   {isLogin 

@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { sanitizeTitle, sanitizeNote, validateDate } from '@/utils/inputSanitization';
+import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
 
 export interface Moment {
   id: string;
@@ -34,10 +36,10 @@ export const useMoments = () => {
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching moments:', error);
+        logError(error, 'fetch_moments');
         toast({
           title: "Error",
-          description: "No se pudieron cargar los momentos",
+          description: getSecureErrorMessage(error),
           variant: "destructive",
         });
       } else {
@@ -48,22 +50,53 @@ export const useMoments = () => {
         setMoments(formattedMoments);
       }
     } catch (error) {
-      console.error('Error fetching moments:', error);
+      logError(error, 'fetch_moments_general');
     }
 
     setLoading(false);
   };
 
-  // Agregar nuevo momento
+  // Agregar nuevo momento con validación y sanitización
   const addMoment = async (newMoment: Omit<Moment, 'id' | 'user_id'>) => {
-    if (!user) return;
+    if (!user) return false;
+
+    // Sanitize and validate input
+    const sanitizedTitle = sanitizeTitle(newMoment.title);
+    const sanitizedNote = sanitizeNote(newMoment.note);
+
+    if (!sanitizedTitle.trim()) {
+      toast({
+        title: "Error de validación",
+        description: "El título es requerido",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!sanitizedNote.trim()) {
+      toast({
+        title: "Error de validación",
+        description: "La nota es requerida",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!validateDate(newMoment.date)) {
+      toast({
+        title: "Error de validación",
+        description: "La fecha no es válida",
+        variant: "destructive",
+      });
+      return false;
+    }
 
     try {
       const { data, error } = await supabase
         .from('moments')
         .insert([{
-          title: newMoment.title,
-          note: newMoment.note,
+          title: sanitizedTitle,
+          note: sanitizedNote,
           date: newMoment.date.toISOString().split('T')[0],
           photo: newMoment.photo,
           user_id: user.id
@@ -72,10 +105,10 @@ export const useMoments = () => {
         .single();
 
       if (error) {
-        console.error('Error adding moment:', error);
+        logError(error, 'add_moment');
         toast({
           title: "Error",
-          description: "No se pudo guardar el momento",
+          description: getSecureErrorMessage(error),
           variant: "destructive",
         });
         return false;
@@ -95,7 +128,7 @@ export const useMoments = () => {
 
       return true;
     } catch (error) {
-      console.error('Error adding moment:', error);
+      logError(error, 'add_moment_general');
       return false;
     }
   };
