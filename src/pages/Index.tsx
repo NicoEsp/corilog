@@ -5,12 +5,23 @@ import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
+import LoadMoreMoments from '@/components/LoadMoreMoments';
 import { Button } from '@/components/ui/button';
 import { Camera, BookOpen, Calendar, List } from 'lucide-react';
-import { useMomentsQuery } from '@/hooks/useMomentsQuery';
+import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 
 const Index = () => {
-  const { moments, isLoading, createMoment, deleteMoment, isCreating } = useMomentsQuery();
+  const { 
+    moments, 
+    isLoading, 
+    isLoadingMore,
+    hasNextPage,
+    fetchNextPage,
+    createMoment, 
+    deleteMoment, 
+    isCreating 
+  } = useInfiniteMomentsQuery();
+  
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
@@ -22,6 +33,12 @@ const Index = () => {
 
   const handleDeleteMoment = async (momentId: string) => {
     deleteMoment(momentId);
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isLoadingMore) {
+      fetchNextPage();
+    }
   };
 
   if (isLoading) {
@@ -53,7 +70,7 @@ const Index = () => {
       <Header onAddMoment={() => setShowAddForm(true)} />
       
       <main className="container mx-auto px-4 py-6 sm:py-8">
-        {moments.length === 0 ? (
+        {moments.length === 0 && !isLoading ? (
           <div className="text-center py-12 sm:py-20">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6 sm:mb-8 animate-gentle-bounce">
               <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-sage-400" />
@@ -118,7 +135,7 @@ const Index = () => {
                   <div
                     key={moment.id}
                     className="animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    style={{ animationDelay: `${(index % 10) * 0.1}s` }}
                   >
                     <MomentCard 
                       moment={moment} 
@@ -127,15 +144,33 @@ const Index = () => {
                     />
                   </div>
                 ))}
+                
+                {/* Componente de cargar más */}
+                <LoadMoreMoments
+                  hasNextPage={hasNextPage}
+                  isLoadingMore={isLoadingMore}
+                  onLoadMore={handleLoadMore}
+                  autoLoad={true}
+                />
               </div>
             )}
 
             {/* Vista de línea de tiempo */}
             {viewMode === 'timeline' && (
-              <Timeline 
-                moments={moments}
-                onMomentClick={setSelectedMoment}
-              />
+              <>
+                <Timeline 
+                  moments={moments}
+                  onMomentClick={setSelectedMoment}
+                />
+                
+                {/* Cargar más en timeline también */}
+                <LoadMoreMoments
+                  hasNextPage={hasNextPage}
+                  isLoadingMore={isLoadingMore}
+                  onLoadMore={handleLoadMore}
+                  autoLoad={true}
+                />
+              </>
             )}
           </div>
         )}

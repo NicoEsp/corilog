@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale';
 import { Moment } from '@/types/moment';
 import { Card } from '@/components/ui/card';
 import { Image } from 'lucide-react';
+import LazyImage from './LazyImage';
 
 interface TimelineProps {
   moments: Moment[];
@@ -108,14 +109,11 @@ const MomentTimelineItem = memo(({ moment, onClick }: {
         <div className="p-4 sm:p-6">
           <div className="flex items-start gap-3 sm:gap-4">
             {moment.photo ? (
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-sage-100 flex-shrink-0">
-                <img 
-                  src={moment.photo} 
-                  alt={moment.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
+              <LazyImage 
+                src={moment.photo} 
+                alt={moment.title}
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex-shrink-0"
+              />
             ) : (
               <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-sage-100 flex items-center justify-center flex-shrink-0">
                 <Image className="w-5 h-5 sm:w-6 sm:h-6 text-sage-400" />
