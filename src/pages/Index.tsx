@@ -7,26 +7,24 @@ import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
 import { Button } from '@/components/ui/button';
 import { Camera, BookOpen, Calendar, List } from 'lucide-react';
-import { useMoments } from '@/hooks/useMoments';
+import { useMomentsQuery } from '@/hooks/useMomentsQuery';
 
 const Index = () => {
-  const { moments, loading, addMoment, deleteMoment } = useMoments();
+  const { moments, isLoading, createMoment, deleteMoment, isCreating } = useMomentsQuery();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
 
   const handleAddMoment = async (newMoment: any) => {
-    const success = await addMoment(newMoment);
-    if (success) {
-      setShowAddForm(false);
-    }
+    createMoment(newMoment);
+    setShowAddForm(false);
   };
 
   const handleDeleteMoment = async (momentId: string) => {
-    await deleteMoment(momentId);
+    deleteMoment(momentId);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header onAddMoment={() => setShowAddForm(true)} />
@@ -71,11 +69,12 @@ const Index = () => {
             
             <Button 
               onClick={() => setShowAddForm(true)}
+              disabled={isCreating}
               className="bg-rose-400 hover:bg-rose-500 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 h-11 px-6 text-base touch-manipulation"
               size="lg"
             >
               <Camera className="w-5 h-5 mr-2" />
-              Crear mi primer momento
+              {isCreating ? 'Creando...' : 'Crear mi primer momento'}
             </Button>
           </div>
         ) : (

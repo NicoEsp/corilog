@@ -42,20 +42,26 @@ export class ShareService {
 
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
+      // Query optimizada usando JOIN en lugar de múltiples llamadas
       const { data, error } = await supabase
         .from('shared_moments')
         .select(`
           *,
-          moments (
+          moments!inner (
             id,
             title,
             note,
             date,
             photo,
             user_id
+          ),
+          user_profiles!shared_by_user_id (
+            display_name,
+            email
           )
         `)
         .eq('share_token', shareToken)
+        .gt('expires_at', new Date().toISOString())
         .single();
 
       if (error) {
@@ -67,15 +73,15 @@ export class ShareService {
         return null;
       }
 
-      // Get sharer's email
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.shared_by_user_id);
-      
+      const profile = data.user_profiles as any;
+      const sharedByName = profile?.display_name || profile?.email || 'Usuario anónimo';
+
       return {
         moment: {
           ...data.moments,
           date: new Date(data.moments.date)
         },
-        sharedBy: userData.user?.email || 'Usuario anónimo'
+        sharedBy: sharedByName
       };
     } catch (error) {
       logError(error, 'get_shared_moment_general');
@@ -85,11 +91,13 @@ export class ShareService {
 
   static async getUserShares(userId: string): Promise<SharedMoment[]> {
     try {
+      // Query optimizada con índice user_id, created_at DESC
       const { data, error } = await supabase
         .from('shared_moments')
         .select('*')
         .eq('shared_by_user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limitar resultados para mejor performance
 
       if (error) {
         logError(error, 'get_user_shares');

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import React, { useState, memo } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Image, Trash2, Share2 } from 'lucide-react';
@@ -20,7 +21,7 @@ interface MomentCardProps {
   onDelete: (momentId: string) => void;
 }
 
-const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
+const MomentCard = memo(({ moment, onClick, onDelete }: MomentCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
@@ -38,6 +39,12 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
     onDelete(moment.id);
     setShowDeleteDialog(false);
   };
+
+  // Memoizar el formato de fecha
+  const formattedDate = React.useMemo(() => 
+    format(moment.date, "d 'de' MMMM, yyyy", { locale: es }),
+    [moment.date]
+  );
 
   return (
     <>
@@ -72,6 +79,7 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
                 src={moment.photo} 
                 alt={moment.title}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
           ) : (
@@ -90,7 +98,7 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
             </p>
             
             <time className="text-xs text-sage-500 handwritten">
-              {format(moment.date, "d 'de' MMMM, yyyy", { locale: es })}
+              {formattedDate}
             </time>
           </div>
         </div>
@@ -111,6 +119,8 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
       />
     </>
   );
-};
+});
+
+MomentCard.displayName = 'MomentCard';
 
 export default MomentCard;

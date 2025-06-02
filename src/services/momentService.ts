@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Moment, CreateMomentData } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
@@ -6,13 +5,15 @@ import { sanitizeTitle, sanitizeNote, validateDate } from '@/utils/inputSanitiza
 import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
 
 export class MomentService {
-  static async fetchMoments(userId: string): Promise<Moment[]> {
+  static async fetchMoments(userId: string, limit: number = 20, offset: number = 0): Promise<Moment[]> {
     try {
+      // Query optimizada usando el índice (user_id, date DESC)
       const { data, error } = await supabase
         .from('moments')
         .select('*')
         .eq('user_id', userId)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       if (error) {
         logError(error, 'fetch_moments');
@@ -31,6 +32,25 @@ export class MomentService {
     } catch (error) {
       logError(error, 'fetch_moments_general');
       return [];
+    }
+  }
+
+  static async fetchMomentsCount(userId: string): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('moments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) {
+        logError(error, 'fetch_moments_count');
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      logError(error, 'fetch_moments_count_general');
+      return 0;
     }
   }
 
