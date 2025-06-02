@@ -42,6 +42,44 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_moments: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          moment_id: string
+          share_token: string
+          shared_by_user_id: string
+          shared_with_email: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          moment_id: string
+          share_token?: string
+          shared_by_user_id: string
+          shared_with_email: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          moment_id?: string
+          share_token?: string
+          shared_by_user_id?: string
+          shared_with_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_moments_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

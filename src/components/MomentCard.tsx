@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Image, Trash2 } from 'lucide-react';
+import { Image, Trash2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DeleteMomentDialog from './DeleteMomentDialog';
+import ShareMomentDialog from './ShareMomentDialog';
 
 interface Moment {
   id: string;
@@ -22,10 +22,16 @@ interface MomentCardProps {
 
 const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteDialog(true);
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowShareDialog(true);
   };
 
   const handleConfirmDelete = () => {
@@ -39,15 +45,25 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
         onClick={onClick}
         className="bg-card paper-texture rounded-xl p-4 sm:p-6 gentle-shadow hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] border border-sage-200/30 group relative"
       >
-        {/* Botón de eliminar - solo visible en hover en desktop, siempre visible en móvil */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDeleteClick}
-          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-white/80 hover:bg-red-50 hover:text-red-600 transition-all duration-200 z-10"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        {/* Botones de acción - solo visibles en hover en desktop, siempre visibles en móvil */}
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleShareClick}
+            className="h-8 w-8 bg-white/80 hover:bg-blue-50 hover:text-blue-600"
+          >
+            <Share2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDeleteClick}
+            className="h-8 w-8 bg-white/80 hover:bg-red-50 hover:text-red-600"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
 
         <div className="flex items-start gap-3 sm:gap-4">
           {moment.photo ? (
@@ -84,6 +100,13 @@ const MomentCard = ({ moment, onClick, onDelete }: MomentCardProps) => {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleConfirmDelete}
+        momentTitle={moment.title}
+      />
+
+      <ShareMomentDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        momentId={moment.id}
         momentTitle={moment.title}
       />
     </>

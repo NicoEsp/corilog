@@ -4,14 +4,16 @@ import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
+import Timeline from '@/components/Timeline';
 import { Button } from '@/components/ui/button';
-import { Camera, BookOpen } from 'lucide-react';
+import { Camera, BookOpen, Calendar, List } from 'lucide-react';
 import { useMoments } from '@/hooks/useMoments';
 
 const Index = () => {
   const { moments, loading, addMoment, deleteMoment } = useMoments();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
 
   const handleAddMoment = async (newMoment: any) => {
     const success = await addMoment(newMoment);
@@ -78,30 +80,64 @@ const Index = () => {
           </div>
         ) : (
           <div className="max-w-2xl mx-auto">
+            {/* Header de momentos con toggle de vista */}
             <div className="mb-6 sm:mb-8 text-center">
               <h2 className="text-xl sm:text-2xl font-serif-elegant text-sage-800 mb-2">
                 Momentos atesorados
               </h2>
-              <p className="text-sage-600 handwritten text-sm sm:text-base">
+              <p className="text-sage-600 handwritten text-sm sm:text-base mb-4">
                 {moments.length} {moments.length === 1 ? 'momento' : 'momentos'} registrados
               </p>
+              
+              {/* Toggle entre vista lista y timeline */}
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={viewMode === 'list' ? 'bg-rose-400 hover:bg-rose-500' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
+                >
+                  <List className="w-4 h-4 mr-2" />
+                  Lista
+                </Button>
+                <Button
+                  variant={viewMode === 'timeline' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('timeline')}
+                  className={viewMode === 'timeline' ? 'bg-rose-400 hover:bg-rose-500' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Línea de tiempo
+                </Button>
+              </div>
             </div>
             
-            <div className="space-y-4 sm:space-y-6">
-              {moments.map((moment, index) => (
-                <div
-                  key={moment.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <MomentCard 
-                    moment={moment} 
-                    onClick={() => setSelectedMoment(moment)}
-                    onDelete={handleDeleteMoment}
-                  />
-                </div>
-              ))}
-            </div>
+            {/* Vista de lista */}
+            {viewMode === 'list' && (
+              <div className="space-y-4 sm:space-y-6">
+                {moments.map((moment, index) => (
+                  <div
+                    key={moment.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <MomentCard 
+                      moment={moment} 
+                      onClick={() => setSelectedMoment(moment)}
+                      onDelete={handleDeleteMoment}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Vista de línea de tiempo */}
+            {viewMode === 'timeline' && (
+              <Timeline 
+                moments={moments}
+                onMomentClick={setSelectedMoment}
+              />
+            )}
           </div>
         )}
       </main>
