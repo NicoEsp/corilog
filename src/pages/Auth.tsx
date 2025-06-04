@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,9 +12,11 @@ import { validatePassword } from '@/utils/passwordValidation';
 import { validateEmail } from '@/utils/inputSanitization';
 import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
 import { authRateLimiter } from '@/utils/rateLimiting';
-
 const Auth = () => {
-  const { user, loading } = useAuth();
+  const {
+    user,
+    loading
+  } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +28,6 @@ const Auth = () => {
   if (!loading && user) {
     return <Navigate to="/" replace />;
   }
-
   const validateForm = (): boolean => {
     let isValid = true;
     setEmailError('');
@@ -55,13 +55,10 @@ const Auth = () => {
       setPasswordError('La contraseña debe tener al menos 6 caracteres');
       isValid = false;
     }
-
     return isValid;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
 
     // Check rate limiting
@@ -71,63 +68,63 @@ const Auth = () => {
       toast({
         title: "Demasiados intentos",
         description: `Espera ${remainingTime} minutos antes de intentar nuevamente`,
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const {
+          error
+        } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
-          password,
+          password
         });
-        
         if (error) {
           // Record failed attempt
-          const { blocked } = authRateLimiter.recordAttempt(rateLimitKey);
-          
+          const {
+            blocked
+          } = authRateLimiter.recordAttempt(rateLimitKey);
           logError(error, 'auth_signin');
-          
           if (blocked) {
             const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
             toast({
               title: "Cuenta temporalmente bloqueada",
               description: `Demasiados intentos fallidos. Espera ${remainingTime} minutos.`,
-              variant: "destructive",
+              variant: "destructive"
             });
           } else {
             toast({
               title: "Error de inicio de sesión",
               description: getSecureErrorMessage(error),
-              variant: "destructive",
+              variant: "destructive"
             });
           }
         } else {
           toast({
             title: "¡Bienvenida!",
-            description: "Has iniciado sesión correctamente",
+            description: "Has iniciado sesión correctamente"
           });
         }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const {
+          error
+        } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
-          password,
+          password
         });
-        
         if (error) {
           logError(error, 'auth_signup');
           toast({
             title: "Error de registro",
             description: getSecureErrorMessage(error),
-            variant: "destructive",
+            variant: "destructive"
           });
         } else {
           toast({
             title: "¡Cuenta creada!",
-            description: "Tu cuenta ha sido creada exitosamente",
+            description: "Tu cuenta ha sido creada exitosamente"
           });
         }
       }
@@ -136,23 +133,17 @@ const Auth = () => {
       toast({
         title: "Error inesperado",
         description: getSecureErrorMessage(error),
-        variant: "destructive",
+        variant: "destructive"
       });
     }
-
     setIsSubmitting(false);
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600"></div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+  return <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
@@ -161,9 +152,7 @@ const Auth = () => {
           <h1 className="text-3xl font-serif-elegant text-sage-800 mb-2">
             Corilog
           </h1>
-          <p className="text-sage-600 handwritten">
-            Momentos que atesoro
-          </p>
+          <p className="text-sage-600 handwritten">Tu diario íntimo digital</p>
         </div>
 
         <Card className="bg-card paper-texture gentle-shadow border-sage-200/50">
@@ -173,10 +162,7 @@ const Auth = () => {
                 {isLogin ? 'Bienvenida de vuelta' : 'Crear cuenta'}
               </h2>
               <p className="text-sm text-sage-600 handwritten">
-                {isLogin 
-                  ? 'Accede a tus momentos especiales' 
-                  : 'Comienza a guardar tus recuerdos'
-                }
+                {isLogin ? 'Accede a tus momentos especiales' : 'Comienza a guardar tus recuerdos'}
               </p>
             </div>
 
@@ -187,26 +173,14 @@ const Auth = () => {
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-sage-400" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setEmailError('');
-                    }}
-                    placeholder="tu@email.com"
-                    className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${
-                      emailError ? 'border-red-300' : ''
-                    }`}
-                    required
-                    autoComplete="email"
-                  />
+                  <Input type="email" value={email} onChange={e => {
+                  setEmail(e.target.value);
+                  setEmailError('');
+                }} placeholder="tu@email.com" className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${emailError ? 'border-red-300' : ''}`} required autoComplete="email" />
                 </div>
-                {emailError && (
-                  <p className="text-xs text-red-600 mt-1 handwritten">
+                {emailError && <p className="text-xs text-red-600 mt-1 handwritten">
                     {emailError}
-                  </p>
-                )}
+                  </p>}
               </div>
 
               <div>
@@ -215,90 +189,56 @@ const Auth = () => {
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-sage-400" />
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setPasswordError('');
-                    }}
-                    placeholder="••••••••"
-                    className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${
-                      passwordError ? 'border-red-300' : ''
-                    }`}
-                    required
-                    minLength={isLogin ? 6 : 12}
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                  />
+                  <Input type="password" value={password} onChange={e => {
+                  setPassword(e.target.value);
+                  setPasswordError('');
+                }} placeholder="••••••••" className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${passwordError ? 'border-red-300' : ''}`} required minLength={isLogin ? 6 : 12} autoComplete={isLogin ? "current-password" : "new-password"} />
                 </div>
-                {passwordError && (
-                  <p className="text-xs text-red-600 mt-1 handwritten">
+                {passwordError && <p className="text-xs text-red-600 mt-1 handwritten">
                     {passwordError}
-                  </p>
-                )}
+                  </p>}
                 
                 {/* Password strength indicator for registration */}
-                {!isLogin && password && (
-                  <div className="mt-2">
+                {!isLogin && password && <div className="mt-2">
                     <PasswordStrengthIndicator password={password} />
-                  </div>
-                )}
+                  </div>}
                 
                 {/* Security notice for registration */}
-                {!isLogin && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                {!isLogin && <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-blue-700 handwritten">
                         Tu contraseña debe tener al menos 12 caracteres e incluir mayúsculas, minúsculas, números y símbolos.
                       </p>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
 
             <div className="space-y-4">
-              <Button
-                type="submit"
-                className="w-full bg-rose-400 hover:bg-rose-500 text-white"
-                disabled={isSubmitting || !email || !password}
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center gap-2">
+              <Button type="submit" className="w-full bg-rose-400 hover:bg-rose-500 text-white" disabled={isSubmitting || !email || !password}>
+                {isSubmitting ? <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     {isLogin ? 'Iniciando sesión...' : 'Creando cuenta...'}
-                  </div>
-                ) : (
-                  <>
+                  </div> : <>
                     <Camera className="w-4 h-4 mr-2" />
                     {isLogin ? 'Iniciar sesión' : 'Crear cuenta'}
-                  </>
-                )}
+                  </>}
               </Button>
 
               <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setEmailError('');
-                    setPasswordError('');
-                  }}
-                  className="text-sm text-sage-600 hover:text-sage-800 underline handwritten"
-                >
-                  {isLogin 
-                    ? '¿No tienes cuenta? Crear una' 
-                    : '¿Ya tienes cuenta? Iniciar sesión'
-                  }
+                <button type="button" onClick={() => {
+                setIsLogin(!isLogin);
+                setEmailError('');
+                setPasswordError('');
+              }} className="text-sm text-sage-600 hover:text-sage-800 underline handwritten">
+                  {isLogin ? '¿No tienes cuenta? Crear una' : '¿Ya tienes cuenta? Iniciar sesión'}
                 </button>
               </div>
             </div>
           </form>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Auth;
