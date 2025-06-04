@@ -13,23 +13,30 @@ interface TimelineProps {
 }
 
 const Timeline = memo(({ moments, onMomentClick }: TimelineProps) => {
-  // Memoizar el agrupamiento por año para evitar recálculos
-  const momentsByYear = useMemo(() => {
+  // Memoizar el agrupamiento por año y mes para evitar recálculos
+  const momentsByYearAndMonth = useMemo(() => {
     return moments.reduce((acc, moment) => {
       const year = moment.date.getFullYear();
-      if (!acc[year]) {
-        acc[year] = [];
+      const month = moment.date.getMonth();
+      const yearKey = year.toString();
+      const monthKey = `${year}-${month}`;
+      
+      if (!acc[yearKey]) {
+        acc[yearKey] = {};
       }
-      acc[year].push(moment);
+      if (!acc[yearKey][monthKey]) {
+        acc[yearKey][monthKey] = [];
+      }
+      acc[yearKey][monthKey].push(moment);
       return acc;
-    }, {} as Record<number, Moment[]>);
+    }, {} as Record<string, Record<string, Moment[]>>);
   }, [moments]);
 
   const years = useMemo(() => 
-    Object.keys(momentsByYear)
+    Object.keys(momentsByYearAndMonth)
       .map(Number)
       .sort((a, b) => b - a),
-    [momentsByYear]
+    [momentsByYearAndMonth]
   );
 
   if (moments.length === 0) {
@@ -48,7 +55,7 @@ const Timeline = memo(({ moments, onMomentClick }: TimelineProps) => {
         <YearSection 
           key={year} 
           year={year} 
-          moments={momentsByYear[year]} 
+          monthsData={momentsByYearAndMonth[year.toString()]} 
           onMomentClick={onMomentClick}
         />
       ))}
@@ -57,24 +64,69 @@ const Timeline = memo(({ moments, onMomentClick }: TimelineProps) => {
 });
 
 // Componente memoizado para cada sección de año
-const YearSection = memo(({ year, moments, onMomentClick }: {
+const YearSection = memo(({ year, monthsData, onMomentClick }: {
   year: number;
+  monthsData: Record<string, Moment[]>;
+  onMomentClick: (moment: Moment) => void;
+}) => {
+  const monthKeys = useMemo(() => 
+    Object.keys(monthsData).sort((a, b) => {
+      const [yearA, monthA] = a.split('-').map(Number);
+      const [yearB, monthB] = b.split('-').map(Number);
+      return monthB - monthA; // Orden descendente por mes
+    }),
+    [monthsData]
+  );
+
+  return (
+    <div className="relative">
+      {/* Año */}
+      <div className="sticky top-20 z-10 mb-6">
+        <div className="bg-background/95 backdrop-blur-sm inline-block px-4 py-2 rounded-full border border-sage-200/50 shadow-sm">
+          <h3 className="font-serif-elegant text-lg text-sage-800">{year}</h3>
+        </div>
+      </div>
+
+      {/* Línea vertical */}
+      <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-gradient-to-b from-sage-300 to-transparent"></div>
+
+      {/* Momentos agrupados por mes */}
+      <div className="space-y-8 pl-16">
+        {monthKeys.map((monthKey) => {
+          const moments = monthsData[monthKey];
+          const firstMoment = moments[0];
+          const monthName = format(firstMoment.date, 'MMM', { locale: es }).toUpperCase();
+          
+          return (
+            <MonthSection
+              key={monthKey}
+              monthName={monthName}
+              moments={moments}
+              onMomentClick={onMomentClick}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
+// Componente para cada sección de mes
+const MonthSection = memo(({ monthName, moments, onMomentClick }: {
+  monthName: string;
   moments: Moment[];
   onMomentClick: (moment: Moment) => void;
 }) => (
   <div className="relative">
-    {/* Año */}
-    <div className="sticky top-20 z-10 mb-6">
-      <div className="bg-background/95 backdrop-blur-sm inline-block px-4 py-2 rounded-full border border-sage-200/50 shadow-sm">
-        <h3 className="font-serif-elegant text-lg text-sage-800">{year}</h3>
+    {/* Tag del mes en el lado derecho */}
+    <div className="absolute -right-16 top-2 z-10">
+      <div className="bg-sage-100/80 text-sage-600 px-2 py-1 rounded-md text-xs font-medium border border-sage-200/50 shadow-sm">
+        {monthName}
       </div>
     </div>
 
-    {/* Línea vertical */}
-    <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-gradient-to-b from-sage-300 to-transparent"></div>
-
-    {/* Momentos del año */}
-    <div className="space-y-6 pl-16">
+    {/* Momentos del mes */}
+    <div className="space-y-4">
       {moments.map((moment) => (
         <MomentTimelineItem 
           key={moment.id} 
@@ -142,6 +194,7 @@ const MomentTimelineItem = memo(({ moment, onClick }: {
 });
 
 YearSection.displayName = 'YearSection';
+MonthSection.displayName = 'MonthSection';
 MomentTimelineItem.displayName = 'MomentTimelineItem';
 Timeline.displayName = 'Timeline';
 

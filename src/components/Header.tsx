@@ -1,8 +1,9 @@
 
-import { Camera, LogOut } from 'lucide-react';
+import { Camera, LogOut, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import AccountDropdown from './AccountDropdown';
+import { useSharedMomentsCount } from '@/hooks/useSharedMomentsCount';
 
 interface HeaderProps {
   onAddMoment: () => void;
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 const Header = ({ onAddMoment }: HeaderProps) => {
   const { user, signOut } = useAuth();
+  const { count: sharedMomentsCount, loading: loadingSharedCount } = useSharedMomentsCount();
 
   const handleSignOut = async () => {
     await signOut();
@@ -28,6 +30,18 @@ const Header = ({ onAddMoment }: HeaderProps) => {
         </div>
         
         <div className="flex items-center gap-3">
+          {user && (
+            <Button 
+              variant="outline"
+              size="sm"
+              className="border-sage-300 text-sage-600 hover:bg-sage-50 bg-sage-50/50"
+              disabled
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              {loadingSharedCount ? '...' : sharedMomentsCount} compartidos
+            </Button>
+          )}
+          
           {user && <AccountDropdown />}
           
           <Button 

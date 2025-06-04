@@ -5,7 +5,6 @@ import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
-import HorizontalTimeline from '@/components/HorizontalTimeline';
 import LoadMoreMoments from '@/components/LoadMoreMoments';
 import { Button } from '@/components/ui/button';
 import { Camera, BookOpen, Calendar, List, Mail, Book, Lock } from 'lucide-react';
@@ -25,7 +24,7 @@ const Index = () => {
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'horizontal-timeline'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
 
   const handleAddMoment = async (newMoment: any) => {
     createMoment(newMoment);
@@ -110,7 +109,7 @@ const Index = () => {
                 {moments.length} {moments.length === 1 ? 'momento' : 'momentos'} registrados
               </p>
               
-              {/* Toggle entre vistas - ahora con 4 opciones */}
+              {/* Toggle entre vistas - ahora con funciones premium */}
               <div className="flex justify-center gap-2 flex-wrap">
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -129,15 +128,6 @@ const Index = () => {
                 >
                   <Calendar className="w-4 h-4 mr-2" />
                   Línea de tiempo
-                </Button>
-                <Button
-                  variant={viewMode === 'horizontal-timeline' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('horizontal-timeline')}
-                  className={viewMode === 'horizontal-timeline' ? 'bg-rose-400 hover:bg-rose-500' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Timeline H
                 </Button>
                 
                 {/* Funciones premium bloqueadas */}
@@ -209,26 +199,6 @@ const Index = () => {
                   autoLoad={true}
                 />
               </div>
-            )}
-
-            {/* Vista de línea de tiempo horizontal */}
-            {viewMode === 'horizontal-timeline' && (
-              <>
-                <HorizontalTimeline 
-                  moments={moments}
-                  onMomentClick={setSelectedMoment}
-                />
-                
-                {/* Cargar más en timeline horizontal también */}
-                <div className="mt-8">
-                  <LoadMoreMoments
-                    hasNextPage={hasNextPage}
-                    isLoadingMore={isLoadingMore}
-                    onLoadMore={handleLoadMore}
-                    autoLoad={true}
-                  />
-                </div>
-              </>
             )}
           </div>
         )}
