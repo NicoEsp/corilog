@@ -152,7 +152,7 @@ const Auth = () => {
           <h1 className="text-3xl font-serif-elegant text-sage-800 mb-2">
             Corilog
           </h1>
-          <p className="text-sage-600 handwritten">Tu diario íntimo digital</p>
+          <p className="text-sage-600 handwritten">Tu diario privado digital</p>
         </div>
 
         <Card className="bg-card paper-texture gentle-shadow border-sage-200/50">
