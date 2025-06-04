@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { logError, getSecureErrorMessage } from '@/utils/errorHandling';
 
 export class ShareService {
-  static async createShare(userId: string, shareData: CreateSharedMomentData): Promise<SharedMoment | null> {
+  static async createShare(userId: string, shareData: CreateSharedMomentData, senderName?: string): Promise<SharedMoment | null> {
     try {
       const { data, error } = await supabase
         .from('shared_moments')
@@ -28,10 +28,49 @@ export class ShareService {
         return null;
       }
 
-      toast({
-        title: "¡Momento compartido!",
-        description: `El momento ha sido compartido con ${shareData.shared_with_email}`,
-      });
+      // Get moment details for email
+      const { data: momentData, error: momentError } = await supabase
+        .from('moments')
+        .select('title')
+        .eq('id', shareData.moment_id)
+        .single();
+
+      if (momentError) {
+        logError(momentError, 'get_moment_for_share');
+      }
+
+      // Send invitation email
+      try {
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-invitation', {
+          body: {
+            shareToken: data.share_token,
+            recipientEmail: shareData.shared_with_email,
+            momentTitle: momentData?.title || 'Momento especial',
+            senderName: senderName || 'Un amigo'
+          }
+        });
+
+        if (emailError) {
+          console.error('Error sending invitation email:', emailError);
+          toast({
+            title: "Momento compartido",
+            description: `El momento ha sido compartido con ${shareData.shared_with_email}, pero no se pudo enviar el email de invitación.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "¡Momento compartido!",
+            description: `El momento ha sido compartido con ${shareData.shared_with_email} y se ha enviado una invitación por email.`,
+          });
+        }
+      } catch (emailError) {
+        console.error('Error invoking email function:', emailError);
+        toast({
+          title: "Momento compartido",
+          description: `El momento ha sido compartido con ${shareData.shared_with_email}, pero no se pudo enviar el email de invitación.`,
+          variant: "destructive",
+        });
+      }
 
       return data;
     } catch (error) {

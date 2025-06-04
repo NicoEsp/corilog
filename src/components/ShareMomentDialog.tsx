@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ShareService } from '@/services/shareService';
 import { useAuth } from '@/contexts/AuthContext';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Mail } from 'lucide-react';
 
 interface ShareMomentDialogProps {
   open: boolean;
@@ -35,10 +35,18 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
     if (!user || !email.trim()) return;
 
     setIsSharing(true);
+    
+    // Get user profile for sender name
+    const { data: profile } = await user.identities?.[0] 
+      ? { data: null } 
+      : await supabase.from('user_profiles').select('display_name').eq('id', user.id).single();
+    
+    const senderName = profile?.display_name || user.email?.split('@')[0] || 'Un amigo';
+
     const sharedMoment = await ShareService.createShare(user.id, {
       moment_id: momentId,
       shared_with_email: email.trim()
-    });
+    }, senderName);
 
     if (sharedMoment) {
       const link = `${window.location.origin}/shared/${sharedMoment.share_token}`;
@@ -72,7 +80,7 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
             Compartir momento
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sage-600">
-            Comparte "{momentTitle}" con alguien especial. La persona necesitará crear una cuenta para ver el momento.
+            Comparte "{momentTitle}" con alguien especial. Se enviará una invitación por email automáticamente.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -90,6 +98,10 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
                 onChange={(e) => setEmail(e.target.value)}
                 className="border-sage-200 focus:border-sage-400"
               />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-sage-500 bg-sage-50 p-3 rounded-lg">
+              <Mail className="w-4 h-4" />
+              <span>Se enviará una invitación automáticamente por email</span>
             </div>
           </div>
         ) : (
@@ -118,9 +130,15 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
                 </Button>
               </div>
             </div>
-            <p className="text-sm text-sage-500">
-              Enlace enviado a {email}. También puedes copiarlo y enviarlo manualmente.
-            </p>
+            <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Check className="w-4 h-4" />
+                <span className="font-medium">¡Invitación enviada!</span>
+              </div>
+              <p className="text-sm text-green-600 mt-1">
+                Se ha enviado una invitación por email a {email}. También puedes copiar el enlace arriba.
+              </p>
+            </div>
           </div>
         )}
 
@@ -134,7 +152,7 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
               disabled={!email.trim() || isSharing}
               className="bg-rose-400 hover:bg-rose-500 text-white"
             >
-              {isSharing ? 'Compartiendo...' : 'Compartir'}
+              {isSharing ? 'Enviando invitación...' : 'Compartir y Enviar Email'}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>
