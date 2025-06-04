@@ -5,9 +5,10 @@ import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
+import HorizontalTimeline from '@/components/HorizontalTimeline';
 import LoadMoreMoments from '@/components/LoadMoreMoments';
 import { Button } from '@/components/ui/button';
-import { Camera, BookOpen, Calendar, List } from 'lucide-react';
+import { Camera, BookOpen, Calendar, List, Mail, Book, Lock } from 'lucide-react';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 
 const Index = () => {
@@ -24,7 +25,7 @@ const Index = () => {
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'horizontal-timeline'>('list');
 
   const handleAddMoment = async (newMoment: any) => {
     createMoment(newMoment);
@@ -39,6 +40,10 @@ const Index = () => {
     if (hasNextPage && !isLoadingMore) {
       fetchNextPage();
     }
+  };
+
+  const handlePremiumFeatureClick = (featureName: string) => {
+    alert(`"${featureName}" es una función premium que estará disponible próximamente.`);
   };
 
   if (isLoading) {
@@ -95,7 +100,7 @@ const Index = () => {
             </Button>
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             {/* Header de momentos con toggle de vista */}
             <div className="mb-6 sm:mb-8 text-center">
               <h2 className="text-xl sm:text-2xl font-serif-elegant text-sage-800 mb-2">
@@ -105,8 +110,8 @@ const Index = () => {
                 {moments.length} {moments.length === 1 ? 'momento' : 'momentos'} registrados
               </p>
               
-              {/* Toggle entre vista lista y timeline */}
-              <div className="flex justify-center gap-2">
+              {/* Toggle entre vistas - ahora con 4 opciones */}
+              <div className="flex justify-center gap-2 flex-wrap">
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'outline'}
                   size="sm"
@@ -125,12 +130,45 @@ const Index = () => {
                   <Calendar className="w-4 h-4 mr-2" />
                   Línea de tiempo
                 </Button>
+                <Button
+                  variant={viewMode === 'horizontal-timeline' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('horizontal-timeline')}
+                  className={viewMode === 'horizontal-timeline' ? 'bg-rose-400 hover:bg-rose-500' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Timeline H
+                </Button>
+                
+                {/* Funciones premium bloqueadas */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePremiumFeatureClick('Carta al Futuro')}
+                  className="border-sage-200 text-sage-400 bg-sage-50 cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <Lock className="w-3 h-3 mr-1" />
+                  <Mail className="w-4 h-4 mr-2" />
+                  Carta al Futuro
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePremiumFeatureClick('Exportar a E-book')}
+                  className="border-sage-200 text-sage-400 bg-sage-50 cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <Lock className="w-3 h-3 mr-1" />
+                  <Book className="w-4 h-4 mr-2" />
+                  E-book
+                </Button>
               </div>
             </div>
             
             {/* Vista de lista */}
             {viewMode === 'list' && (
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto">
                 {moments.map((moment, index) => (
                   <div
                     key={moment.id}
@@ -155,9 +193,9 @@ const Index = () => {
               </div>
             )}
 
-            {/* Vista de línea de tiempo */}
+            {/* Vista de línea de tiempo vertical */}
             {viewMode === 'timeline' && (
-              <>
+              <div className="max-w-2xl mx-auto">
                 <Timeline 
                   moments={moments}
                   onMomentClick={setSelectedMoment}
@@ -170,6 +208,26 @@ const Index = () => {
                   onLoadMore={handleLoadMore}
                   autoLoad={true}
                 />
+              </div>
+            )}
+
+            {/* Vista de línea de tiempo horizontal */}
+            {viewMode === 'horizontal-timeline' && (
+              <>
+                <HorizontalTimeline 
+                  moments={moments}
+                  onMomentClick={setSelectedMoment}
+                />
+                
+                {/* Cargar más en timeline horizontal también */}
+                <div className="mt-8">
+                  <LoadMoreMoments
+                    hasNextPage={hasNextPage}
+                    isLoadingMore={isLoadingMore}
+                    onLoadMore={handleLoadMore}
+                    autoLoad={true}
+                  />
+                </div>
               </>
             )}
           </div>

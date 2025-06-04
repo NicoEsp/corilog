@@ -1,7 +1,8 @@
 
-import { Camera, BookOpen, LogOut } from 'lucide-react';
+import { Camera, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import AccountDropdown from './AccountDropdown';
 
 interface HeaderProps {
   onAddMoment: () => void;
@@ -22,18 +23,12 @@ const Header = ({ onAddMoment }: HeaderProps) => {
             Corilog
           </h1>
           <p className="text-sm text-sage-600 handwritten">
-            Momentos que atesoro
+            Tu diario íntimo digital
           </p>
         </div>
         
         <div className="flex items-center gap-3">
-          {user && (
-            <div className="text-right mr-3">
-              <p className="text-xs text-sage-500 handwritten">
-                {user.email}
-              </p>
-            </div>
-          )}
+          {user && <AccountDropdown />}
           
           <Button 
             onClick={onAddMoment}
