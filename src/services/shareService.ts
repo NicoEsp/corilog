@@ -1,19 +1,44 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SharedMoment, CreateSharedMomentData } from '@/types/sharedMoment';
 import { Moment } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
 import { logError, getSecureErrorMessage } from '@/utils/errorHandling';
+import { validateEmail, sanitizeText, shareRateLimit } from '@/utils/securityUtils';
 
 export class ShareService {
   static async createShare(userId: string, shareData: CreateSharedMomentData, senderName?: string): Promise<SharedMoment | null> {
     try {
+      // Enhanced input validation
+      if (!validateEmail(shareData.shared_with_email)) {
+        toast({
+          title: "Error de validación",
+          description: "El formato del email no es válido",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      // Check client-side rate limiting
+      const rateLimitKey = `share_${userId}`;
+      if (!shareRateLimit.check(rateLimitKey)) {
+        const remainingTime = Math.ceil(shareRateLimit.getRemainingTime(rateLimitKey) / 60000);
+        toast({
+          title: "Límite de compartir alcanzado",
+          description: `Has alcanzado el límite de compartir. Intenta nuevamente en ${remainingTime} minutos.`,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      // Sanitize email
+      const sanitizedEmail = shareData.shared_with_email.toLowerCase().trim();
+
       const { data, error } = await supabase
         .from('shared_moments')
         .insert([{
           moment_id: shareData.moment_id,
           shared_by_user_id: userId,
-          shared_with_email: shareData.shared_with_email
+          shared_with_email: sanitizedEmail
         }])
         .select()
         .single();
@@ -39,14 +64,18 @@ export class ShareService {
         logError(momentError, 'get_moment_for_share');
       }
 
-      // Send invitation email
+      // Sanitize sender name and moment title
+      const sanitizedSender = senderName ? sanitizeText(senderName) : 'Un amigo';
+      const sanitizedTitle = momentData?.title ? sanitizeText(momentData.title) : 'Momento especial';
+
+      // Send invitation email with enhanced security
       try {
         const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-invitation', {
           body: {
             shareToken: data.share_token,
-            recipientEmail: shareData.shared_with_email,
-            momentTitle: momentData?.title || 'Momento especial',
-            senderName: senderName || 'Un amigo'
+            recipientEmail: sanitizedEmail,
+            momentTitle: sanitizedTitle,
+            senderName: sanitizedSender
           }
         });
 
@@ -54,20 +83,20 @@ export class ShareService {
           console.error('Error sending invitation email:', emailError);
           toast({
             title: "Momento compartido",
-            description: `El momento ha sido compartido con ${shareData.shared_with_email}, pero no se pudo enviar el email de invitación.`,
+            description: `El momento ha sido compartido con ${sanitizedEmail}, pero no se pudo enviar el email de invitación.`,
             variant: "destructive",
           });
         } else {
           toast({
             title: "¡Momento compartido!",
-            description: `El momento ha sido compartido con ${shareData.shared_with_email} y se ha enviado una invitación por email.`,
+            description: `El momento ha sido compartido con ${sanitizedEmail} y se ha enviado una invitación por email.`,
           });
         }
       } catch (emailError) {
         console.error('Error invoking email function:', emailError);
         toast({
           title: "Momento compartido",
-          description: `El momento ha sido compartido con ${shareData.shared_with_email}, pero no se pudo enviar el email de invitación.`,
+          description: `El momento ha sido compartido con ${sanitizedEmail}, pero no se pudo enviar el email de invitación.`,
           variant: "destructive",
         });
       }
@@ -81,46 +110,31 @@ export class ShareService {
 
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
-      // Query optimizada usando JOIN en lugar de múltiples llamadas
+      // Use the secure function instead of direct query
       const { data, error } = await supabase
-        .from('shared_moments')
-        .select(`
-          *,
-          moments!inner (
-            id,
-            title,
-            note,
-            date,
-            photo,
-            user_id
-          ),
-          user_profiles!shared_by_user_id (
-            display_name,
-            email
-          )
-        `)
-        .eq('share_token', shareToken)
-        .gt('expires_at', new Date().toISOString())
-        .single();
+        .rpc('get_shared_moment_with_details', { token_param: shareToken });
 
       if (error) {
         logError(error, 'get_shared_moment');
         return null;
       }
 
-      if (!data.moments) {
+      if (!data || data.length === 0) {
         return null;
       }
 
-      const profile = data.user_profiles as any;
-      const sharedByName = profile?.display_name || profile?.email || 'Usuario anónimo';
-
+      const momentData = data[0];
+      
       return {
         moment: {
-          ...data.moments,
-          date: new Date(data.moments.date)
+          id: momentData.moment_id,
+          title: momentData.moment_title,
+          note: momentData.moment_note,
+          date: new Date(momentData.moment_date),
+          photo: momentData.moment_photo,
+          user_id: '' // Not needed for shared moments
         },
-        sharedBy: sharedByName
+        sharedBy: momentData.shared_by_name || momentData.shared_by_email || 'Usuario anónimo'
       };
     } catch (error) {
       logError(error, 'get_shared_moment_general');

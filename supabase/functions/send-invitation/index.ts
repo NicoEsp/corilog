@@ -1,123 +1,261 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-interface InvitationRequest {
-  shareToken: string;
-  recipientEmail: string;
-  momentTitle: string;
-  senderName: string;
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+// Rate limiting store (in production, use Redis or similar)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// Enhanced input validation
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 320; // RFC 5321 limit
+};
+
+const validateShareToken = (token: string): boolean => {
+  return typeof token === 'string' && token.length > 0 && token.length <= 100;
+};
+
+const validateMomentTitle = (title: string): boolean => {
+  return typeof title === 'string' && title.trim().length > 0 && title.length <= 200;
+};
+
+const validateSenderName = (name: string): boolean => {
+  return typeof name === 'string' && name.trim().length > 0 && name.length <= 100;
+};
+
+const validateSiteUrl = (url: string): boolean => {
+  try {
+    const parsedUrl = new URL(url);
+    // Only allow https and localhost for development
+    return parsedUrl.protocol === 'https:' || 
+           (parsedUrl.protocol === 'http:' && parsedUrl.hostname === 'localhost');
+  } catch {
+    return false;
+  }
+};
+
+// Rate limiting function
+const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: number } => {
+  const now = Date.now();
+  const key = `email_${userId}`;
+  const limit = rateLimitStore.get(key);
+  
+  if (!limit || now > limit.resetTime) {
+    // Reset or create new limit (5 emails per hour)
+    rateLimitStore.set(key, { count: 1, resetTime: now + 3600000 });
+    return { allowed: true };
+  }
+  
+  if (limit.count >= 5) {
+    return { allowed: false, resetTime: limit.resetTime };
+  }
+  
+  limit.count++;
+  return { allowed: true };
+};
+
+// Sanitize string inputs
+const sanitizeString = (input: string): string => {
+  return input.trim().replace(/[<>\"'&]/g, '');
+};
+
+serve(async (req) => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { shareToken, recipientEmail, momentTitle, senderName }: InvitationRequest = await req.json();
+    // Verify authentication
+    const authorization = req.headers.get('authorization');
+    if (!authorization) {
+      throw new Error('No authorization header');
+    }
 
-    console.log('Sending invitation email:', { shareToken, recipientEmail, momentTitle, senderName });
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://xgukkzjwudbxyiohspsv.supabase.co';
 
-    const shareUrl = `${Deno.env.get('SITE_URL') || 'http://localhost:8080'}/shared/${shareToken}`;
+    if (!resendApiKey) {
+      throw new Error('Missing RESEND_API_KEY configuration');
+    }
 
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Momento Compartido</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; background: #f9fafb; margin: 0; padding: 20px; }
-            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-            .header { background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); padding: 40px 30px; text-align: center; }
-            .header h1 { margin: 0; color: #7c3aed; font-size: 28px; font-weight: 600; }
-            .content { padding: 40px 30px; }
-            .moment-card { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }
-            .moment-title { font-size: 20px; font-weight: 600; color: #6b21a8; margin: 0 0 10px 0; }
-            .shared-by { color: #6b7280; font-size: 14px; }
-            .cta-button { display: inline-block; background: #f472b6; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
-            .cta-button:hover { background: #ec4899; }
-            .footer { background: #f9fafb; padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>💝 Momento Especial Compartido</h1>
+    if (!validateSiteUrl(siteUrl)) {
+      throw new Error('Invalid SITE_URL configuration');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false }
+    });
+
+    // Get user from auth token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authorization.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error('Invalid authentication token');
+    }
+
+    // Check rate limiting
+    const rateLimitCheck = checkRateLimit(user.id);
+    if (!rateLimitCheck.allowed) {
+      const resetTime = new Date(rateLimitCheck.resetTime!);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded. Try again later.',
+          resetTime: resetTime.toISOString()
+        }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Parse and validate request body
+    const body = await req.json();
+    const { shareToken, recipientEmail, momentTitle, senderName } = body;
+
+    // Comprehensive input validation
+    if (!validateShareToken(shareToken)) {
+      throw new Error('Invalid share token format');
+    }
+
+    if (!validateEmail(recipientEmail)) {
+      throw new Error('Invalid recipient email format');
+    }
+
+    if (!validateMomentTitle(momentTitle)) {
+      throw new Error('Invalid moment title');
+    }
+
+    if (!validateSenderName(senderName)) {
+      throw new Error('Invalid sender name');
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = recipientEmail.toLowerCase().trim();
+    const sanitizedTitle = sanitizeString(momentTitle);
+    const sanitizedSender = sanitizeString(senderName);
+
+    // Verify the share token belongs to the authenticated user
+    const { data: shareData, error: shareError } = await supabase
+      .from('shared_moments')
+      .select('id, moment_id, expires_at')
+      .eq('share_token', shareToken)
+      .eq('shared_by_user_id', user.id)
+      .single();
+
+    if (shareError || !shareData) {
+      throw new Error('Invalid or unauthorized share token');
+    }
+
+    // Check if share token is still valid
+    if (shareData.expires_at && new Date(shareData.expires_at) <= new Date()) {
+      throw new Error('Share token has expired');
+    }
+
+    // Create the share URL
+    const shareUrl = `${siteUrl}/shared/${shareToken}`;
+
+    // Send email via Resend
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Corilog <noreply@xgukkzjwudbxyiohspsv.supabase.co>',
+        to: [sanitizedEmail],
+        subject: `${sanitizedSender} te ha compartido un momento especial`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #8B5A3C; font-size: 28px; margin-bottom: 10px;">✨ Corilog</h1>
+              <p style="color: #6B7280; font-style: italic;">Tu diario privado digital</p>
             </div>
-            <div class="content">
-              <p>¡Hola!</p>
-              <p><strong>${senderName}</strong> ha compartido un momento especial contigo:</p>
-              
-              <div class="moment-card">
-                <div class="moment-title">${momentTitle}</div>
-                <div class="shared-by">Compartido por ${senderName}</div>
-              </div>
-              
-              <p>Haz clic en el botón de abajo para ver este momento:</p>
-              
-              <div style="text-align: center;">
-                <a href="${shareUrl}" class="cta-button">Ver Momento 💫</a>
-              </div>
-              
-              <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">
-                Si no puedes hacer clic en el botón, copia y pega este enlace en tu navegador:<br>
-                <a href="${shareUrl}" style="color: #7c3aed;">${shareUrl}</a>
+            
+            <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+              <h2 style="color: #374151; margin-top: 0;">Tienes un momento especial compartido</h2>
+              <p style="color: #6B7280; font-size: 16px; line-height: 1.5;">
+                <strong>${sanitizedSender}</strong> ha compartido contigo el momento especial:
+              </p>
+              <p style="color: #8B5A3C; font-size: 18px; font-weight: 600; margin: 16px 0;">
+                "${sanitizedTitle}"
               </p>
             </div>
-            <div class="footer">
-              <p>Este es un momento especial compartido desde nuestra plataforma de recuerdos.</p>
-              <p>Si no esperabas este correo, puedes ignorarlo de forma segura.</p>
+            
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${shareUrl}" 
+                 style="display: inline-block; background: #FB7185; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Ver momento compartido
+              </a>
+            </div>
+            
+            <div style="border-top: 1px solid #E5E7EB; padding-top: 20px; margin-top: 32px;">
+              <p style="color: #9CA3AF; font-size: 14px; text-align: center;">
+                Este enlace es privado y personal. No lo compartas con nadie más.
+              </p>
+              <p style="color: #9CA3AF; font-size: 12px; text-align: center; margin-top: 16px;">
+                Este email fue enviado desde Corilog. Si no esperabas este mensaje, puedes ignorarlo de forma segura.
+              </p>
             </div>
           </div>
-        </body>
-      </html>
-    `;
-
-    const emailResponse = await resend.emails.send({
-      from: "Momentos <onboarding@resend.dev>",
-      to: [recipientEmail],
-      subject: `${senderName} compartió un momento especial contigo: "${momentTitle}"`,
-      html: emailHtml,
+        `,
+      }),
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      console.error('Resend API error:', errorText);
+      throw new Error('Failed to send invitation email');
+    }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      messageId: emailResponse.data?.id 
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
+    const emailResult = await emailResponse.json();
+    
+    console.log('Email sent successfully:', {
+      id: emailResult.id,
+      to: sanitizedEmail,
+      shareToken: shareToken.substring(0, 8) + '...' // Log partial token for debugging
     });
-  } catch (error: any) {
-    console.error("Error sending invitation email:", error);
+
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Error sending email' 
+        success: true, 
+        message: 'Invitation sent successfully',
+        emailId: emailResult.id 
       }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+
+  } catch (error) {
+    console.error('Send invitation error:', error);
+    
+    // Return appropriate error response
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    const statusCode = errorMessage.includes('Rate limit') ? 429 : 
+                      errorMessage.includes('Invalid') || errorMessage.includes('unauthorized') ? 400 : 500;
+
+    return new Response(
+      JSON.stringify({ 
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      }),
+      { 
+        status: statusCode,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
-};
-
-serve(handler);
+});
