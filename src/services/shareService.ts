@@ -121,8 +121,8 @@ export class ShareService {
 
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
-      // Use the secure function instead of direct query
-      const { data, error } = await supabase
+      // Use the secure function instead of direct query with explicit typing
+      const { data, error }: { data: SharedMomentWithDetails[] | null; error: any } = await supabase
         .rpc('get_shared_moment_with_details', { token_param: shareToken });
 
       if (error) {
@@ -130,14 +130,11 @@ export class ShareService {
         return null;
       }
 
-      // Type assertion only on the data we know should be the correct type
-      const typedData = data as SharedMomentWithDetails[] | null;
-
-      if (!typedData || typedData.length === 0) {
+      if (!data || data.length === 0) {
         return null;
       }
 
-      const momentData = typedData[0];
+      const momentData = data[0];
       
       return {
         moment: {
