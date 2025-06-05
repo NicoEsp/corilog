@@ -124,7 +124,10 @@ export class ShareService {
     try {
       // Use the secure function instead of direct query with proper typing
       const { data, error } = await supabase
-        .rpc('get_shared_moment_with_details', { token_param: shareToken });
+        .rpc('get_shared_moment_with_details', { token_param: shareToken }) as {
+          data: SharedMomentWithDetails[] | null;
+          error: any;
+        };
 
       if (error) {
         logError(error, 'get_shared_moment');
@@ -135,7 +138,7 @@ export class ShareService {
         return null;
       }
 
-      const momentData = data[0] as SharedMomentWithDetails;
+      const momentData = data[0];
       
       return {
         moment: {
