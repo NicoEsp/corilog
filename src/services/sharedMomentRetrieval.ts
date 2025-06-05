@@ -9,10 +9,8 @@ export class SharedMomentRetrieval {
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
       // Use the secure function instead of direct query with explicit typing
-      const result = await supabase
+      const { data, error }: { data: any; error: any } = await supabase
         .rpc('get_shared_moment_with_details', { token_param: shareToken });
-
-      const { data, error } = result;
 
       if (error) {
         logError(error, 'get_shared_moment');
