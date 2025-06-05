@@ -8,8 +8,8 @@ import { logError } from '@/utils/errorHandling';
 export class SharedMomentRetrieval {
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
-      // Use the secure function instead of direct query with explicit typing
-      const { data, error }: { data: any; error: any } = await supabase
+      // Use the secure function instead of direct query
+      const { data, error } = await supabase
         .rpc('get_shared_moment_with_details', { token_param: shareToken });
 
       if (error) {
