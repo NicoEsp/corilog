@@ -1,9 +1,21 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SharedMoment, CreateSharedMomentData } from '@/types/sharedMoment';
 import { Moment } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
 import { logError, getSecureErrorMessage } from '@/utils/errorHandling';
 import { validateEmail, sanitizeText, shareRateLimit } from '@/utils/securityUtils';
+
+// Type for the RPC function response
+interface SharedMomentWithDetails {
+  moment_id: string;
+  moment_title: string;
+  moment_note: string;
+  moment_date: string;
+  moment_photo: string | null;
+  shared_by_name: string | null;
+  shared_by_email: string | null;
+}
 
 export class ShareService {
   static async createShare(userId: string, shareData: CreateSharedMomentData, senderName?: string): Promise<SharedMoment | null> {
@@ -110,9 +122,12 @@ export class ShareService {
 
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
-      // Use the secure function instead of direct query
+      // Use the secure function instead of direct query with proper typing
       const { data, error } = await supabase
-        .rpc('get_shared_moment_with_details', { token_param: shareToken });
+        .rpc('get_shared_moment_with_details', { token_param: shareToken }) as {
+          data: SharedMomentWithDetails[] | null;
+          error: any;
+        };
 
       if (error) {
         logError(error, 'get_shared_moment');
