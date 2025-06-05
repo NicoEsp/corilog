@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SharedMoment, CreateSharedMomentData } from '@/types/sharedMoment';
 import { Moment } from '@/types/moment';
@@ -123,13 +124,10 @@ export class ShareService {
     try {
       // Use the secure function instead of direct query with proper typing
       const { data, error } = await supabase
-        .rpc('get_shared_moment_with_details', { token_param: shareToken }) as {
-          data: SharedMomentWithDetails[] | null;
-          error: any;
-        };
+        .rpc('get_shared_moment_with_details', { token_param: shareToken });
 
       if (error) {
-        logError(error);
+        logError(error, 'get_shared_moment');
         return null;
       }
 
@@ -137,7 +135,7 @@ export class ShareService {
         return null;
       }
 
-      const momentData = data[0];
+      const momentData = data[0] as SharedMomentWithDetails;
       
       return {
         moment: {
@@ -151,7 +149,7 @@ export class ShareService {
         sharedBy: momentData.shared_by_name || momentData.shared_by_email || 'Usuario anónimo'
       };
     } catch (error) {
-      logError(error);
+      logError(error, 'get_shared_moment_general');
       return null;
     }
   }
