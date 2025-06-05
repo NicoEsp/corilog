@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SharedMoment, CreateSharedMomentData } from '@/types/sharedMoment';
 import { Moment } from '@/types/moment';
@@ -122,23 +121,23 @@ export class ShareService {
 
   static async getSharedMoment(shareToken: string): Promise<{ moment: Moment; sharedBy: string } | null> {
     try {
-      // Use the secure function instead of direct query with proper typing
+      // Use the secure function instead of direct query
       const { data, error } = await supabase
-        .rpc('get_shared_moment_with_details', { token_param: shareToken }) as {
-          data: SharedMomentWithDetails[] | null;
-          error: any;
-        };
+        .rpc('get_shared_moment_with_details', { token_param: shareToken });
 
       if (error) {
         logError(error, 'get_shared_moment');
         return null;
       }
 
-      if (!data || data.length === 0) {
+      // Type assertion only on the data we know should be the correct type
+      const typedData = data as SharedMomentWithDetails[] | null;
+
+      if (!typedData || typedData.length === 0) {
         return null;
       }
 
-      const momentData = data[0];
+      const momentData = typedData[0];
       
       return {
         moment: {
