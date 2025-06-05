@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SharedMoment, CreateSharedMomentData } from '@/types/sharedMoment';
 import { Moment } from '@/types/moment';
@@ -130,7 +129,7 @@ export class ShareService {
         };
 
       if (error) {
-        logError(error, 'get_shared_moment');
+        logError(error);
         return null;
       }
 
@@ -152,7 +151,7 @@ export class ShareService {
         sharedBy: momentData.shared_by_name || momentData.shared_by_email || 'Usuario anónimo'
       };
     } catch (error) {
-      logError(error, 'get_shared_moment_general');
+      logError(error);
       return null;
     }
   }
