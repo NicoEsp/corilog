@@ -50,7 +50,7 @@ export type Database = {
           moment_id: string
           share_token: string
           shared_by_user_id: string
-          shared_with_email: string
+          shared_with_email: string | null
         }
         Insert: {
           created_at?: string
@@ -59,7 +59,7 @@ export type Database = {
           moment_id: string
           share_token?: string
           shared_by_user_id: string
-          shared_with_email: string
+          shared_with_email?: string | null
         }
         Update: {
           created_at?: string
@@ -68,7 +68,7 @@ export type Database = {
           moment_id?: string
           share_token?: string
           shared_by_user_id?: string
-          shared_with_email?: string
+          shared_with_email?: string | null
         }
         Relationships: [
           {

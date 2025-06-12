@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ShareService } from '@/services/shareService';
 import { useAuth } from '@/contexts/AuthContext';
-import { Copy, Check, Share2, MessageCircle } from 'lucide-react';
+import { Copy, Check, Share2, MessageCircle, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ShareMomentDialogProps {
@@ -30,23 +30,39 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
   const [shareLink, setShareLink] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [error, setError] = useState('');
 
   const generateShareLink = async () => {
-    if (!user) return;
+    if (!user) {
+      setError('Debes estar autenticado para generar enlaces');
+      return;
+    }
 
     setIsGenerating(true);
+    setError('');
     
-    const sharedMoment = await ShareService.createShareLink(user.id, momentId);
+    console.log('Generando enlace para momento:', momentId);
+    
+    try {
+      const sharedMoment = await ShareService.createShareLink(user.id, momentId);
 
-    if (sharedMoment) {
-      const link = `${window.location.origin}/shared/${sharedMoment.share_token}`;
-      setShareLink(link);
-      toast({
-        title: "¡Enlace generado!",
-        description: "Ya puedes compartir este momento con quien quieras",
-      });
+      if (sharedMoment) {
+        const link = `${window.location.origin}/shared/${sharedMoment.share_token}`;
+        console.log('Enlace generado:', link);
+        setShareLink(link);
+        toast({
+          title: "¡Enlace generado!",
+          description: "Ya puedes compartir este momento con quien quieras",
+        });
+      } else {
+        setError('No se pudo generar el enlace. Inténtalo de nuevo.');
+      }
+    } catch (err) {
+      console.error('Error inesperado:', err);
+      setError('Error inesperado al generar el enlace');
+    } finally {
+      setIsGenerating(false);
     }
-    setIsGenerating(false);
   };
 
   const copyLink = async () => {
@@ -60,6 +76,11 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
       });
     } catch (error) {
       console.error('Error copying link:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo copiar el enlace",
+        variant: "destructive",
+      });
     }
   };
 
@@ -72,6 +93,7 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
   const handleClose = () => {
     setShareLink('');
     setLinkCopied(false);
+    setError('');
     onOpenChange(false);
   };
 
@@ -86,6 +108,15 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
             Genera un enlace para compartir "{momentTitle}" con quien quieras.
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4" />
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
 
         {!shareLink ? (
           <div className="space-y-4 py-4">
