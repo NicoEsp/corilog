@@ -3,9 +3,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Image, Trash2, Share2 } from 'lucide-react';
+import { ArrowLeft, Image, Trash2 } from 'lucide-react';
 import DeleteMomentDialog from './DeleteMomentDialog';
-import ShareMomentDialog from './ShareMomentDialog';
 
 interface Moment {
   id: string;
@@ -23,14 +22,9 @@ interface MomentDetailProps {
 
 const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const handleDeleteClick = () => {
     setShowDeleteDialog(true);
-  };
-
-  const handleShareClick = () => {
-    setShowShareDialog(true);
   };
 
   const handleConfirmDelete = () => {
@@ -55,15 +49,6 @@ const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
               </Button>
 
               <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={handleShareClick}
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-9 px-3"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Compartir</span>
-                </Button>
-
                 <Button
                   variant="ghost"
                   onClick={handleDeleteClick}
@@ -131,13 +116,6 @@ const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleConfirmDelete}
-        momentTitle={moment.title}
-      />
-
-      <ShareMomentDialog
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-        momentId={moment.id}
         momentTitle={moment.title}
       />
     </div>
