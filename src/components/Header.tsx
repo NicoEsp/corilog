@@ -1,10 +1,10 @@
 
-import { Camera, LogOut, Share2 } from 'lucide-react';
+import { Camera, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import AccountDropdown from './AccountDropdown';
 import MobileNav from './MobileNav';
-import { useSharedMomentsCount } from '@/hooks/useSharedMomentsCount';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface HeaderProps {
   onAddMoment: () => void;
@@ -12,10 +12,37 @@ interface HeaderProps {
 
 const Header = ({ onAddMoment }: HeaderProps) => {
   const { user, signOut } = useAuth();
-  const { count: sharedMomentsCount, loading: loadingSharedCount } = useSharedMomentsCount();
+  const { role, loading: roleLoading } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const getRoleDisplay = () => {
+    if (roleLoading) return '...';
+    switch (role) {
+      case 'superadmin':
+        return 'SuperAdmin';
+      case 'premium':
+        return 'Premium';
+      case 'free':
+        return 'Free';
+      default:
+        return '';
+    }
+  };
+
+  const getRoleColor = () => {
+    switch (role) {
+      case 'superadmin':
+        return 'text-purple-600 bg-purple-50 border-purple-200';
+      case 'premium':
+        return 'text-gold-600 bg-gold-50 border-gold-200';
+      case 'free':
+        return 'text-sage-600 bg-sage-50 border-sage-200';
+      default:
+        return 'text-sage-600 bg-sage-50 border-sage-200';
+    }
   };
 
   return (
@@ -33,16 +60,10 @@ const Header = ({ onAddMoment }: HeaderProps) => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-3">
-          {user && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-sage-300 text-sage-600 hover:bg-sage-50 bg-sage-50/50" 
-              disabled
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              {loadingSharedCount ? '...' : sharedMomentsCount} compartidos
-            </Button>
+          {user && role && (
+            <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor()}`}>
+              {getRoleDisplay()}
+            </div>
           )}
           
           {user && <AccountDropdown />}

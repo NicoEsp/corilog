@@ -2,10 +2,9 @@
 import React, { useState, memo } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Image, Trash2, Share2 } from 'lucide-react';
+import { Image, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DeleteMomentDialog from './DeleteMomentDialog';
-import ShareMomentDialog from './ShareMomentDialog';
 import LazyImage from './LazyImage';
 
 interface Moment {
@@ -24,16 +23,10 @@ interface MomentCardProps {
 
 const MomentCard = memo(({ moment, onClick, onDelete }: MomentCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteDialog(true);
-  };
-
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowShareDialog(true);
   };
 
   const handleConfirmDelete = () => {
@@ -53,16 +46,8 @@ const MomentCard = memo(({ moment, onClick, onDelete }: MomentCardProps) => {
         onClick={onClick}
         className="bg-card paper-texture rounded-xl p-4 sm:p-6 gentle-shadow hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98] sm:hover:scale-[1.02] border border-sage-200/30 group relative touch-manipulation"
       >
-        {/* Botones de acción - Optimizados para móvil */}
-        <div className="absolute top-3 right-3 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 z-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleShareClick}
-            className="h-9 w-9 sm:h-8 sm:w-8 bg-white/90 hover:bg-blue-50 hover:text-blue-600 shadow-sm touch-manipulation"
-          >
-            <Share2 className="w-4 h-4" />
-          </Button>
+        {/* Botón de eliminar - Optimizado para móvil */}
+        <div className="absolute top-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 z-10">
           <Button
             variant="ghost"
             size="icon"
@@ -106,13 +91,6 @@ const MomentCard = memo(({ moment, onClick, onDelete }: MomentCardProps) => {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleConfirmDelete}
-        momentTitle={moment.title}
-      />
-
-      <ShareMomentDialog
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-        momentId={moment.id}
         momentTitle={moment.title}
       />
     </>

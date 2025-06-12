@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Menu, X, LogOut, Share2, Camera } from 'lucide-react';
+import { Menu, LogOut, Camera, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -10,7 +10,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSharedMomentsCount } from '@/hooks/useSharedMomentsCount';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface MobileNavProps {
   onAddMoment: () => void;
@@ -19,7 +19,7 @@ interface MobileNavProps {
 const MobileNav = ({ onAddMoment }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { count: sharedMomentsCount, loading: loadingSharedCount } = useSharedMomentsCount();
+  const { role, loading: roleLoading } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -29,6 +29,33 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
   const handleAddMoment = () => {
     onAddMoment();
     setIsOpen(false);
+  };
+
+  const getRoleDisplay = () => {
+    if (roleLoading) return 'Cargando...';
+    switch (role) {
+      case 'superadmin':
+        return 'SuperAdmin';
+      case 'premium':
+        return 'Premium';
+      case 'free':
+        return 'Free';
+      default:
+        return 'Usuario';
+    }
+  };
+
+  const getRoleColor = () => {
+    switch (role) {
+      case 'superadmin':
+        return 'text-purple-600 bg-purple-50 border-purple-200';
+      case 'premium':
+        return 'text-gold-600 bg-gold-50 border-gold-200';
+      case 'free':
+        return 'text-sage-600 bg-sage-50 border-sage-200';
+      default:
+        return 'text-sage-600 bg-sage-50 border-sage-200';
+    }
   };
 
   if (!user) return null;
@@ -62,13 +89,13 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
             Nuevo momento
           </Button>
 
-          <div className="flex items-center justify-between p-4 bg-sage-50/50 rounded-lg border border-sage-200/50">
+          <div className={`flex items-center justify-between p-4 rounded-lg border ${getRoleColor()}`}>
             <div className="flex items-center gap-3">
-              <Share2 className="w-5 h-5 text-sage-600" />
-              <span className="text-sage-700 font-medium">Compartidos</span>
+              {role === 'superadmin' && <Crown className="w-5 h-5" />}
+              <span className="font-medium">Plan actual</span>
             </div>
-            <span className="text-sage-600 font-semibold">
-              {loadingSharedCount ? '...' : sharedMomentsCount}
+            <span className="font-semibold">
+              {getRoleDisplay()}
             </span>
           </div>
 

@@ -42,44 +42,6 @@ export type Database = {
         }
         Relationships: []
       }
-      shared_moments: {
-        Row: {
-          created_at: string
-          expires_at: string | null
-          id: string
-          moment_id: string
-          share_token: string
-          shared_by_user_id: string
-          shared_with_email: string | null
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          moment_id: string
-          share_token?: string
-          shared_by_user_id: string
-          shared_with_email?: string | null
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          moment_id?: string
-          share_token?: string
-          shared_by_user_id?: string
-          shared_with_email?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shared_moments_moment_id_fkey"
-            columns: ["moment_id"]
-            isOneToOne: false
-            referencedRelation: "moments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_profiles: {
         Row: {
           created_at: string
@@ -104,15 +66,49 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id?: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      has_role: {
+        Args: {
+          required_role: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "superadmin" | "free" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -227,6 +223,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["superadmin", "free", "premium"],
+    },
   },
 } as const
