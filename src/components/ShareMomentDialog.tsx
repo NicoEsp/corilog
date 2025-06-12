@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,8 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ShareService } from '@/services/shareService';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Copy, Check, Mail } from 'lucide-react';
+import { Copy, Check, Share2, MessageCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ShareMomentDialogProps {
   open: boolean;
@@ -26,33 +27,26 @@ interface ShareMomentDialogProps {
 
 const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareMomentDialogProps) => {
   const { user } = useAuth();
-  const [email, setEmail] = useState('');
   const [shareLink, setShareLink] = useState('');
-  const [isSharing, setIsSharing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const handleShare = async () => {
-    if (!user || !email.trim()) return;
+  const generateShareLink = async () => {
+    if (!user) return;
 
-    setIsSharing(true);
+    setIsGenerating(true);
     
-    // Get user profile for sender name
-    const { data: profile } = await user.identities?.[0] 
-      ? { data: null } 
-      : await supabase.from('user_profiles').select('display_name').eq('id', user.id).single();
-    
-    const senderName = profile?.display_name || user.email?.split('@')[0] || 'Un amigo';
-
-    const sharedMoment = await ShareService.createShare(user.id, {
-      moment_id: momentId,
-      shared_with_email: email.trim()
-    }, senderName);
+    const sharedMoment = await ShareService.createShareLink(user.id, momentId);
 
     if (sharedMoment) {
       const link = `${window.location.origin}/shared/${sharedMoment.share_token}`;
       setShareLink(link);
+      toast({
+        title: "¡Enlace generado!",
+        description: "Ya puedes compartir este momento con quien quieras",
+      });
     }
-    setIsSharing(false);
+    setIsGenerating(false);
   };
 
   const copyLink = async () => {
@@ -60,13 +54,22 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
       await navigator.clipboard.writeText(shareLink);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+      toast({
+        title: "¡Enlace copiado!",
+        description: "El enlace está listo para compartir",
+      });
     } catch (error) {
       console.error('Error copying link:', error);
     }
   };
 
+  const shareViaWhatsApp = () => {
+    const message = `¡Mira este momento especial que quiero compartir contigo! "${momentTitle}" ${shareLink}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const handleClose = () => {
-    setEmail('');
     setShareLink('');
     setLinkCopied(false);
     onOpenChange(false);
@@ -80,28 +83,19 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
             Compartir momento
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sage-600">
-            Comparte "{momentTitle}" con alguien especial. Se enviará una invitación por email automáticamente.
+            Genera un enlace para compartir "{momentTitle}" con quien quieras.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {!shareLink ? (
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sage-700">
-                Email del destinatario
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="ejemplo@correo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border-sage-200 focus:border-sage-400"
-              />
-            </div>
-            <div className="flex items-center gap-2 text-sm text-sage-500 bg-sage-50 p-3 rounded-lg">
-              <Mail className="w-4 h-4" />
-              <span>Se enviará una invitación automáticamente por email</span>
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
+                <Share2 className="w-6 h-6 text-rose-500" />
+              </div>
+              <p className="text-sage-600 text-sm">
+                Genera un enlace único para compartir este momento por WhatsApp, email o cualquier otra forma.
+              </p>
             </div>
           </div>
         ) : (
@@ -114,7 +108,7 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
                 <Input
                   value={shareLink}
                   readOnly
-                  className="border-sage-200 bg-sage-50"
+                  className="border-sage-200 bg-sage-50 text-sm"
                 />
                 <Button
                   variant="outline"
@@ -130,14 +124,46 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
                 </Button>
               </div>
             </div>
-            <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-green-700">
-                <Check className="w-4 h-4" />
-                <span className="font-medium">¡Invitación enviada!</span>
+            
+            <div className="flex gap-2">
+              <Button
+                onClick={shareViaWhatsApp}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                size="sm"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Compartir por WhatsApp
+              </Button>
+              <Button
+                onClick={copyLink}
+                variant="outline"
+                className="border-sage-200 text-sage-700 hover:bg-sage-100"
+                size="sm"
+              >
+                {linkCopied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                    ¡Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar enlace
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+              <div className="flex items-start gap-2 text-sm text-blue-700">
+                <Share2 className="w-4 h-4 mt-0.5" />
+                <div>
+                  <p className="font-medium">¡Enlace listo para compartir!</p>
+                  <p className="text-blue-600 mt-1">
+                    Cualquier persona con este enlace podrá ver el momento, sin necesidad de registrarse.
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-green-600 mt-1">
-                Se ha enviado una invitación por email a {email}. También puedes copiar el enlace arriba.
-              </p>
             </div>
           </div>
         )}
@@ -148,11 +174,11 @@ const ShareMomentDialog = ({ open, onOpenChange, momentId, momentTitle }: ShareM
           </AlertDialogCancel>
           {!shareLink && (
             <AlertDialogAction
-              onClick={handleShare}
-              disabled={!email.trim() || isSharing}
+              onClick={generateShareLink}
+              disabled={isGenerating}
               className="bg-rose-400 hover:bg-rose-500 text-white"
             >
-              {isSharing ? 'Enviando invitación...' : 'Compartir y Enviar Email'}
+              {isGenerating ? 'Generando enlace...' : 'Generar enlace'}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>

@@ -5,9 +5,10 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Image, Heart, UserPlus } from 'lucide-react';
+import { Image, Heart, UserPlus, Copy, Check } from 'lucide-react';
 import { ShareService } from '@/services/shareService';
 import { Moment } from '@/types/moment';
+import { toast } from '@/hooks/use-toast';
 
 const SharedMoment = () => {
   const { token } = useParams<{ token: string }>();
@@ -15,6 +16,7 @@ const SharedMoment = () => {
   const [sharedBy, setSharedBy] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -33,6 +35,20 @@ const SharedMoment = () => {
       setError(true);
     }
     setLoading(false);
+  };
+
+  const shareCurrentPage = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+      toast({
+        title: "¡Enlace copiado!",
+        description: "Ahora puedes compartir este momento con otros",
+      });
+    } catch (error) {
+      console.error('Error copying link:', error);
+    }
   };
 
   if (loading) {
@@ -71,20 +87,40 @@ const SharedMoment = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-2xl">
-        {/* Header con info de compartido */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center gap-2 text-sage-500 text-sm mb-4">
-            <Heart className="w-4 h-4" />
-            <span>Momento compartido por {sharedBy}</span>
+      <div className="container mx-auto px-4 py-4 sm:py-6 max-w-2xl">
+        {/* Header mejorado */}
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="flex items-center justify-center gap-2 text-sage-500 text-sm mb-3">
+            <Heart className="w-4 h-4 text-rose-400" />
+            <span>Momento compartido por <span className="font-medium text-sage-700">{sharedBy}</span></span>
           </div>
+          
+          {/* Botón para compartir este momento */}
+          <Button
+            onClick={shareCurrentPage}
+            variant="outline"
+            size="sm"
+            className="border-sage-200 text-sage-600 hover:bg-sage-50"
+          >
+            {linkCopied ? (
+              <>
+                <Check className="w-4 h-4 mr-2 text-green-600" />
+                ¡Copiado!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 mr-2" />
+                Compartir este momento
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Momento */}
-        <Card className="bg-card paper-texture gentle-shadow border-sage-200/50 animate-fade-in mb-6">
+        <Card className="bg-card paper-texture gentle-shadow border-sage-200/50 animate-fade-in mb-4 sm:mb-6">
           <div className="p-4 sm:p-6 lg:p-8">
-            <div className="text-center mb-6 sm:mb-8">
-              <time className="text-sm text-sage-500 handwritten block mb-3 sm:mb-4">
+            <div className="text-center mb-4 sm:mb-6">
+              <time className="text-sm text-sage-500 handwritten block mb-2 sm:mb-3">
                 {format(moment.date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
               </time>
               
@@ -94,7 +130,7 @@ const SharedMoment = () => {
             </div>
 
             {moment.photo && (
-              <div className="mb-6 sm:mb-8">
+              <div className="mb-4 sm:mb-6">
                 <div className="rounded-xl overflow-hidden gentle-shadow">
                   <img 
                     src={moment.photo} 
@@ -116,7 +152,7 @@ const SharedMoment = () => {
             )}
 
             {!moment.note && !moment.photo && (
-              <div className="text-center py-8 sm:py-12">
+              <div className="text-center py-6 sm:py-8">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-4">
                   <Image className="w-5 h-5 sm:w-6 sm:h-6 text-sage-400" />
                 </div>
@@ -128,24 +164,43 @@ const SharedMoment = () => {
           </div>
         </Card>
 
-        {/* Call to action */}
+        {/* Call to action mejorado */}
         <Card className="bg-gradient-to-br from-rose-50 to-cream-50 border-rose-200/50 text-center">
-          <div className="p-6 sm:p-8">
-            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
+          <div className="p-4 sm:p-6">
+            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
               <UserPlus className="w-6 h-6 text-rose-500" />
             </div>
             <h2 className="text-lg font-serif-elegant text-sage-800 mb-2">
               ¿Te gustó este momento?
             </h2>
-            <p className="text-sage-600 mb-6 text-sm">
-              Crea tu propia cuenta y comienza a guardar tus momentos especiales
+            <p className="text-sage-600 mb-4 text-sm">
+              Crea tu propia cuenta en Corilog y comienza a guardar tus momentos especiales
             </p>
-            <Link to="/auth">
-              <Button className="bg-rose-400 hover:bg-rose-500 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
-                <Heart className="w-4 h-4 mr-2" />
-                Crear mi cuenta
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Link to="/auth">
+                <Button className="bg-rose-400 hover:bg-rose-500 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 w-full sm:w-auto">
+                  <Heart className="w-4 h-4 mr-2" />
+                  Crear mi cuenta
+                </Button>
+              </Link>
+              <Button
+                onClick={shareCurrentPage}
+                variant="outline"
+                className="border-sage-200 text-sage-600 hover:bg-sage-50 w-full sm:w-auto"
+              >
+                {linkCopied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                    ¡Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Compartir momento
+                  </>
+                )}
               </Button>
-            </Link>
+            </div>
           </div>
         </Card>
       </div>
