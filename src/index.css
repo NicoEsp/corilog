@@ -56,6 +56,8 @@
     background-image: 
       radial-gradient(circle at 25% 25%, rgba(248, 244, 235, 0.3) 0%, transparent 50%),
       radial-gradient(circle at 75% 75%, rgba(239, 214, 192, 0.2) 0%, transparent 50%);
+    /* Evitar zoom en inputs en iOS */
+    -webkit-text-size-adjust: 100%;
   }
 
   h1, h2, h3 {
@@ -64,6 +66,22 @@
 
   .handwritten {
     @apply font-handwritten;
+  }
+
+  /* Mejoras para dispositivos táctiles */
+  @media (hover: none) and (pointer: coarse) {
+    .hover\:scale-\[1\.02\] {
+      transform: none;
+    }
+    
+    .hover\:shadow-lg {
+      box-shadow: 0 4px 20px rgba(139, 151, 139, 0.1);
+    }
+  }
+
+  /* Safe area para dispositivos con notch */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
   /* Custom scrollbar */
@@ -82,6 +100,23 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-sage-400;
   }
+
+  /* Mejorar accesibilidad táctil */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Evitar el highlight azul en iOS */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mejorar el rendimiento de las animaciones */
+  .animate-fade-in,
+  .group:hover,
+  .transition-all {
+    will-change: transform, opacity;
+  }
 }
 
 @layer components {
@@ -93,5 +128,13 @@
 
   .gentle-shadow {
     box-shadow: 0 4px 20px rgba(139, 151, 139, 0.1);
+  }
+
+  /* Mejoras para línea de contenido clampeable */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 }

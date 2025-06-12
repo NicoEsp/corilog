@@ -51,15 +51,15 @@ const MomentCard = memo(({ moment, onClick, onDelete }: MomentCardProps) => {
     <>
       <div 
         onClick={onClick}
-        className="bg-card paper-texture rounded-xl p-4 sm:p-6 gentle-shadow hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] border border-sage-200/30 group relative"
+        className="bg-card paper-texture rounded-xl p-4 sm:p-6 gentle-shadow hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98] sm:hover:scale-[1.02] border border-sage-200/30 group relative touch-manipulation"
       >
-        {/* Botones de acción - solo visibles en hover en desktop, siempre visibles en móvil */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 z-10">
+        {/* Botones de acción - Optimizados para móvil */}
+        <div className="absolute top-3 right-3 flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 z-10">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleShareClick}
-            className="h-8 w-8 bg-white/80 hover:bg-blue-50 hover:text-blue-600"
+            className="h-9 w-9 sm:h-8 sm:w-8 bg-white/90 hover:bg-blue-50 hover:text-blue-600 shadow-sm touch-manipulation"
           >
             <Share2 className="w-4 h-4" />
           </Button>
@@ -67,35 +67,35 @@ const MomentCard = memo(({ moment, onClick, onDelete }: MomentCardProps) => {
             variant="ghost"
             size="icon"
             onClick={handleDeleteClick}
-            className="h-8 w-8 bg-white/80 hover:bg-red-50 hover:text-red-600"
+            className="h-9 w-9 sm:h-8 sm:w-8 bg-white/90 hover:bg-red-50 hover:text-red-600 shadow-sm touch-manipulation"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
 
-        <div className="flex items-start gap-3 sm:gap-4">
+        <div className="flex items-start gap-4">
           {moment.photo ? (
             <LazyImage 
               src={moment.photo} 
               alt={moment.title}
-              className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex-shrink-0"
+              className="w-16 h-16 sm:w-16 sm:h-16 rounded-lg flex-shrink-0"
             />
           ) : (
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-sage-100 flex items-center justify-center flex-shrink-0">
-              <Image className="w-5 h-5 sm:w-6 sm:h-6 text-sage-400" />
+            <div className="w-16 h-16 sm:w-16 sm:h-16 rounded-lg bg-sage-100 flex items-center justify-center flex-shrink-0">
+              <Image className="w-6 h-6 text-sage-400" />
             </div>
           )}
           
-          <div className="flex-1 min-w-0 pr-8 sm:pr-0">
-            <h3 className="font-serif-elegant text-base sm:text-lg text-sage-800 mb-1 sm:mb-2 leading-snug line-clamp-2">
+          <div className="flex-1 min-w-0 pr-2 sm:pr-0">
+            <h3 className="font-serif-elegant text-lg sm:text-lg text-sage-800 mb-2 leading-snug line-clamp-2">
               {moment.title}
             </h3>
             
-            <p className="text-sage-600 text-sm mb-2 sm:mb-3 line-clamp-2 whitespace-pre-wrap">
+            <p className="text-sage-600 text-base sm:text-sm mb-3 line-clamp-2 whitespace-pre-wrap leading-relaxed">
               {moment.note}
             </p>
             
-            <time className="text-xs text-sage-500 handwritten">
+            <time className="text-sm sm:text-xs text-sage-500 handwritten">
               {formattedDate}
             </time>
           </div>

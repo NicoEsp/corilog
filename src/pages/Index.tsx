@@ -73,7 +73,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header onAddMoment={() => setShowAddForm(true)} />
       
-      <main className="container mx-auto px-4 py-6 sm:py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-safe">
         {moments.length === 0 && !isLoading ? (
           <EmptyState 
             onAddMoment={() => setShowAddForm(true)}
