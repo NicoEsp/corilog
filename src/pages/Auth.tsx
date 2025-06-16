@@ -13,6 +13,7 @@ import { validatePassword } from '@/utils/passwordValidation';
 import { validateEmail } from '@/utils/inputSanitization';
 import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
 import { authRateLimiter } from '@/utils/rateLimiting';
+import { assignUserRole } from '@/services/roleService';
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -109,7 +110,9 @@ const Auth = () => {
           });
         }
       } else {
-        const { error } = await supabase.auth.signUp({
+        // Registro de usuario
+        console.log('Iniciando registro de usuario...');
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password
         });
@@ -121,12 +124,25 @@ const Auth = () => {
             description: getSecureErrorMessage(error),
             variant: "destructive"
           });
-        } else {
-          // Successful registration - show confirmation and switch to login
-          toast({
-            title: "¡Cuenta creada exitosamente!",
-            description: "Ahora puedes iniciar sesión con tu email y contraseña",
-          });
+        } else if (data.user) {
+          console.log('Usuario registrado exitosamente, asignando rol...');
+          
+          // Asignar rol automáticamente después del registro exitoso
+          const roleResult = await assignUserRole(data.user.id, email.trim().toLowerCase());
+          
+          if (roleResult.success) {
+            console.log('Rol asignado exitosamente');
+            toast({
+              title: "¡Cuenta creada exitosamente!",
+              description: "Ahora puedes iniciar sesión con tu email y contraseña",
+            });
+          } else {
+            console.log('Error asignando rol, pero usuario fue creado');
+            toast({
+              title: "¡Cuenta creada!",
+              description: "Tu cuenta fue creada. Si tienes problemas de acceso, contacta al soporte.",
+            });
+          }
           
           // Switch to login mode and keep the email
           setIsLogin(true);

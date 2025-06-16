@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { logError } from '@/utils/errorHandling';
+import { ensureUserHasRole } from '@/services/roleService';
 
 export type UserRole = 'superadmin' | 'free' | 'premium';
 
@@ -20,15 +21,18 @@ export const useUserRole = () => {
       }
 
       try {
-        const { data, error } = await supabase
-          .rpc('get_user_role', { user_id: user.id });
-
-        if (error) {
-          logError(error, 'fetch_user_role');
-          // Fallback a 'free' si hay error
-          setRole('free');
+        console.log(`Obteniendo rol para usuario ${user.id} con email ${user.email}`);
+        
+        // Usar la nueva función que asegura que el usuario tiene un rol
+        const userRole = await ensureUserHasRole(user.id, user.email || '');
+        
+        if (userRole) {
+          setRole(userRole);
+          console.log(`Rol obtenido/asignado: ${userRole}`);
         } else {
-          setRole(data as UserRole);
+          // Fallback a 'free' si algo sale mal
+          console.log('Fallback a rol free');
+          setRole('free');
         }
       } catch (error) {
         logError(error, 'fetch_user_role_general');
