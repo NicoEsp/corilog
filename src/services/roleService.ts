@@ -56,11 +56,12 @@ export const assignUserRole = async (userId: string, email: string): Promise<{ s
 
 export const ensureUserHasRole = async (userId: string, email: string): Promise<UserRole | null> => {
   try {
-    // Intentar obtener el rol actual
+    // Intentar obtener el rol actual usando la función RPC
     const { data: roleData, error: getRoleError } = await supabase
       .rpc('get_user_role', { user_id: userId });
     
     if (!getRoleError && roleData) {
+      console.log(`Rol encontrado: ${roleData}`);
       return roleData as UserRole;
     }
     
@@ -70,9 +71,12 @@ export const ensureUserHasRole = async (userId: string, email: string): Promise<
     
     if (result.success) {
       // Determinar qué rol se asignó
-      return email === 'nicolassespindola@gmail.com' ? 'superadmin' : 'free';
+      const assignedRole = email === 'nicolassespindola@gmail.com' ? 'superadmin' : 'free';
+      console.log(`Rol asignado exitosamente: ${assignedRole}`);
+      return assignedRole;
     }
     
+    console.log('Error asignando rol');
     return null;
   } catch (error) {
     logError(error, 'ensure_user_has_role');

@@ -30,12 +30,13 @@ export const useUserRole = () => {
           setRole(userRole);
           console.log(`Rol obtenido/asignado: ${userRole}`);
         } else {
-          // Fallback a 'free' si algo sale mal
+          // Fallback si algo sale mal
           console.log('Fallback a rol free');
           setRole('free');
         }
       } catch (error) {
         logError(error, 'fetch_user_role_general');
+        console.log('Error obteniendo rol, usando fallback free');
         setRole('free');
       } finally {
         setLoading(false);
