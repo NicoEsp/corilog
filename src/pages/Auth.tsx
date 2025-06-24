@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+
+import { useState, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -17,12 +18,69 @@ import { assignUserRole } from '@/services/roleService';
 
 const Auth = () => {
   const { user, loading } = useAuth();
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Handle email confirmation on page load
+  useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      const error = searchParams.get('error');
+      const errorDescription = searchParams.get('error_description');
+      
+      if (error) {
+        console.log('Email confirmation error:', error, errorDescription);
+        if (error === 'access_denied' && errorDescription?.includes('expired')) {
+          toast({
+            title: "Enlace expirado",
+            description: "El enlace de confirmación ha expirado. Puedes iniciar sesión normalmente con tu email y contraseña.",
+            variant: "destructive"
+          });
+        }
+        return;
+      }
+
+      // Check if this is a confirmation callback
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      
+      if (accessToken && refreshToken) {
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            logError(error, 'email_confirmation');
+            toast({
+              title: "Error de confirmación",
+              description: getSecureErrorMessage(error),
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "¡Email confirmado!",
+              description: "Tu cuenta ha sido confirmada exitosamente. Ya puedes usar Corilog.",
+            });
+          }
+        } catch (error) {
+          logError(error, 'email_confirmation_general');
+          toast({
+            title: "Error de confirmación",
+            description: "Hubo un problema confirmando tu email. Intenta iniciar sesión normalmente.",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+
+    handleEmailConfirmation();
+  }, [searchParams]);
 
   // Redirigir si ya está autenticado
   if (!loading && user) {
@@ -114,7 +172,10 @@ const Auth = () => {
         console.log('Iniciando registro de usuario...');
         const { data, error } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
-          password
+          password,
+          options: {
+            emailRedirectTo: 'https://corilog.lovable.app'
+          }
         });
         
         if (error) {
@@ -134,13 +195,13 @@ const Auth = () => {
             console.log('Rol asignado exitosamente');
             toast({
               title: "¡Cuenta creada exitosamente!",
-              description: "Ahora puedes iniciar sesión con tu email y contraseña",
+              description: "Revisa tu email para confirmar tu cuenta. Mientras tanto, ya puedes iniciar sesión.",
             });
           } else {
             console.log('Error asignando rol, pero usuario fue creado');
             toast({
               title: "¡Cuenta creada!",
-              description: "Tu cuenta fue creada. Si tienes problemas de acceso, contacta al soporte.",
+              description: "Revisa tu email para confirmar tu cuenta. Si tienes problemas de acceso, contacta al soporte.",
             });
           }
           
