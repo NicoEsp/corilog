@@ -1,236 +1,56 @@
-
-import { useState, useEffect } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PasswordInput } from '@/components/ui/password-input';
-import { Card } from '@/components/ui/card';
-import { BookOpen, Camera, Lock, Mail, AlertTriangle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
-import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
-import { validatePassword } from '@/utils/passwordValidation';
-import { validateEmail } from '@/utils/inputSanitization';
-import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
-import { authRateLimiter } from '@/utils/rateLimiting';
-import { assignUserRole } from '@/services/roleService';
+import { useEmailConfirmation } from '@/hooks/useEmailConfirmation';
+import { useAuthForm } from '@/hooks/useAuthForm';
+import { useAuthSubmit } from '@/hooks/useAuthSubmit';
+import AuthForm from '@/components/auth/AuthForm';
 
 const Auth = () => {
   const { user, loading } = useAuth();
-  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-
-  // Handle email confirmation on page load
-  useEffect(() => {
-    const handleEmailConfirmation = async () => {
-      const error = searchParams.get('error');
-      const errorDescription = searchParams.get('error_description');
-      
-      if (error) {
-        console.log('Email confirmation error:', error, errorDescription);
-        if (error === 'access_denied' && errorDescription?.includes('expired')) {
-          toast({
-            title: "Enlace expirado",
-            description: "El enlace de confirmación ha expirado. Puedes iniciar sesión normalmente con tu email y contraseña.",
-            variant: "destructive"
-          });
-        }
-        return;
-      }
-
-      // Check if this is a confirmation callback
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      
-      if (accessToken && refreshToken) {
-        try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-          
-          if (error) {
-            logError(error, 'email_confirmation');
-            toast({
-              title: "Error de confirmación",
-              description: getSecureErrorMessage(error),
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "¡Email confirmado!",
-              description: "Tu cuenta ha sido confirmada exitosamente. Ya puedes usar Corilog.",
-            });
-          }
-        } catch (error) {
-          logError(error, 'email_confirmation_general');
-          toast({
-            title: "Error de confirmación",
-            description: "Hubo un problema confirmando tu email. Intenta iniciar sesión normalmente.",
-            variant: "destructive"
-          });
-        }
-      }
-    };
-
-    handleEmailConfirmation();
-  }, [searchParams]);
+  
+  // Use custom hooks
+  useEmailConfirmation();
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    emailError,
+    passwordError,
+    validateForm,
+    clearErrors,
+    clearPassword,
+    setEmailError,
+    setPasswordError
+  } = useAuthForm(isLogin);
+  const { isSubmitting, submitAuth } = useAuthSubmit();
 
   // Redirigir si ya está autenticado
   if (!loading && user) {
     return <Navigate to="/" replace />;
   }
 
-  const validateForm = (): boolean => {
-    let isValid = true;
-    setEmailError('');
-    setPasswordError('');
-
-    // Validate email
-    if (!email || !validateEmail(email)) {
-      setEmailError('Por favor ingresa un email válido');
-      isValid = false;
-    }
-
-    // Validate password
-    if (!password) {
-      setPasswordError('La contraseña es requerida');
-      isValid = false;
-    } else if (!isLogin) {
-      // For registration, check password strength
-      const passwordValidation = validatePassword(password);
-      if (!passwordValidation.isValid) {
-        setPasswordError('La contraseña no cumple con los requisitos de seguridad');
-        isValid = false;
-      }
-    } else if (password.length < 6) {
-      // For login, minimum length check
-      setPasswordError('La contraseña debe tener al menos 6 caracteres');
-      isValid = false;
-    }
-    return isValid;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    // Check rate limiting
-    const rateLimitKey = `auth_${email}`;
-    if (authRateLimiter.isBlocked(rateLimitKey)) {
-      const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
-      toast({
-        title: "Demasiados intentos",
-        description: `Espera ${remainingTime} minutos antes de intentar nuevamente`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
+    const success = await submitAuth(isLogin, email, password, validateForm);
     
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password
-        });
-        
-        if (error) {
-          // Record failed attempt
-          const { blocked } = authRateLimiter.recordAttempt(rateLimitKey);
-          logError(error, 'auth_signin');
-          
-          if (blocked) {
-            const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
-            toast({
-              title: "Cuenta temporalmente bloqueada",
-              description: `Demasiados intentos fallidos. Espera ${remainingTime} minutos.`,
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "Error de inicio de sesión",
-              description: getSecureErrorMessage(error),
-              variant: "destructive"
-            });
-          }
-        } else {
-          toast({
-            title: "¡Bienvenida de vuelta!",
-            description: "Has iniciado sesión correctamente"
-          });
-        }
-      } else {
-        // Registro de usuario
-        console.log('Iniciando registro de usuario...');
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(),
-          password,
-          options: {
-            emailRedirectTo: 'https://corilog.lovable.app'
-          }
-        });
-        
-        if (error) {
-          logError(error, 'auth_signup');
-          toast({
-            title: "Error de registro",
-            description: getSecureErrorMessage(error),
-            variant: "destructive"
-          });
-        } else if (data.user) {
-          console.log('Usuario registrado exitosamente, asignando rol...');
-          
-          // Asignar rol automáticamente después del registro exitoso
-          const roleResult = await assignUserRole(data.user.id, email.trim().toLowerCase());
-          
-          if (roleResult.success) {
-            console.log('Rol asignado exitosamente');
-            toast({
-              title: "¡Cuenta creada exitosamente!",
-              description: "Revisa tu email para confirmar tu cuenta. Mientras tanto, ya puedes iniciar sesión.",
-            });
-          } else {
-            console.log('Error asignando rol, pero usuario fue creado');
-            toast({
-              title: "¡Cuenta creada!",
-              description: "Revisa tu email para confirmar tu cuenta. Si tienes problemas de acceso, contacta al soporte.",
-            });
-          }
-          
-          // Switch to login mode and keep the email
-          setIsLogin(true);
-          setPassword(''); // Clear password for security
-          setEmailError('');
-          setPasswordError('');
-        }
-      }
-    } catch (error) {
-      logError(error, 'auth_general');
-      toast({
-        title: "Error inesperado",
-        description: getSecureErrorMessage(error),
-        variant: "destructive"
-      });
+    if (success && !isLogin) {
+      // Switch to login mode and keep the email
+      setIsLogin(true);
+      clearPassword(); // Clear password for security
+      clearErrors();
     }
-    
-    setIsSubmitting(false);
   };
 
   const handleModeSwitch = () => {
     setIsLogin(!isLogin);
-    setEmailError('');
-    setPasswordError('');
+    clearErrors();
     // Don't clear email to make it easier for users
     // Only clear password for security
-    setPassword('');
+    clearPassword();
   };
 
   if (loading) {
@@ -254,125 +74,20 @@ const Auth = () => {
           <p className="text-sage-600 handwritten">Tu diario privado digital</p>
         </div>
 
-        <Card className="bg-card paper-texture gentle-shadow border-sage-200/50">
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="text-center">
-              <h2 className="text-xl font-serif-elegant text-sage-800 mb-2">
-                {isLogin ? 'Bienvenida de vuelta' : 'Crear cuenta'}
-              </h2>
-              <p className="text-sm text-sage-600 handwritten">
-                {isLogin ? 'Accede a tus momentos especiales' : 'Comienza a guardar tus recuerdos'}
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-sage-700 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-sage-400" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setEmailError('');
-                    }}
-                    placeholder="tu@email.com"
-                    className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${
-                      emailError ? 'border-red-300' : ''
-                    }`}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-                {emailError && (
-                  <p className="text-xs text-red-600 mt-1 handwritten">
-                    {emailError}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-sage-700 mb-2">
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-sage-400 z-10" />
-                  <PasswordInput
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setPasswordError('');
-                    }}
-                    placeholder="••••••••"
-                    className={`pl-10 bg-cream-50 border-sage-200 focus:border-rose-300 ${
-                      passwordError ? 'border-red-300' : ''
-                    }`}
-                    required
-                    minLength={isLogin ? 6 : 12}
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                  />
-                </div>
-                {passwordError && (
-                  <p className="text-xs text-red-600 mt-1 handwritten">
-                    {passwordError}
-                  </p>
-                )}
-                
-                {/* Password strength indicator for registration */}
-                {!isLogin && password && (
-                  <div className="mt-2">
-                    <PasswordStrengthIndicator password={password} />
-                  </div>
-                )}
-                
-                {/* Security notice for registration */}
-                {!isLogin && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-blue-700 handwritten">
-                        Tu contraseña debe tener al menos 12 caracteres e incluir mayúsculas, minúsculas, números y símbolos.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full bg-rose-400 hover:bg-rose-500 text-white" 
-                disabled={isSubmitting || !email || !password}
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    {isLogin ? 'Iniciando sesión...' : 'Creando cuenta...'}
-                  </div>
-                ) : (
-                  <>
-                    <Camera className="w-4 h-4 mr-2" />
-                    {isLogin ? 'Iniciar sesión' : 'Crear cuenta'}
-                  </>
-                )}
-              </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleModeSwitch}
-                  className="text-sm text-sage-600 hover:text-sage-800 underline handwritten"
-                >
-                  {isLogin ? '¿No tienes cuenta? Crear una' : '¿Ya tienes cuenta? Iniciar sesión'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </Card>
+        <AuthForm
+          isLogin={isLogin}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          emailError={emailError}
+          passwordError={passwordError}
+          setEmailError={setEmailError}
+          setPasswordError={setPasswordError}
+          isSubmitting={isSubmitting}
+          onSubmit={handleSubmit}
+          onModeSwitch={handleModeSwitch}
+        />
       </div>
     </div>
   );
