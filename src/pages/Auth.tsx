@@ -7,15 +7,18 @@ import { useEmailConfirmation } from '@/hooks/useEmailConfirmation';
 import { useAuthForm } from '@/hooks/useAuthForm';
 import { useAuthSubmit } from '@/hooks/useAuthSubmit';
 import { useForgotPassword } from '@/hooks/useForgotPassword';
+import { usePasswordReset } from '@/hooks/usePasswordReset';
 import AuthForm from '@/components/auth/AuthForm';
 
 const Auth = () => {
   const { user, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   
   // Use custom hooks
-  useEmailConfirmation();
+  const { isPasswordReset, setIsPasswordReset } = useEmailConfirmation();
   const {
     email,
     setEmail,
@@ -31,14 +34,24 @@ const Auth = () => {
   } = useAuthForm(isLogin);
   const { isSubmitting, submitAuth } = useAuthSubmit();
   const { isSubmitting: isSubmittingReset, sendPasswordReset } = useForgotPassword();
+  const { isSubmitting: isSubmittingPasswordReset, resetPassword } = usePasswordReset();
 
-  // Redirigir si ya está autenticado
-  if (!loading && user) {
+  // Redirigir si ya está autenticado (pero no si está en modo reset de contraseña)
+  if (!loading && user && !isPasswordReset) {
     return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isPasswordReset) {
+      const success = await resetPassword(password, confirmPassword);
+      if (success) {
+        // Reset completed successfully, user will be redirected automatically
+        setIsPasswordReset(false);
+      }
+      return;
+    }
     
     if (isForgotPassword) {
       const success = await sendPasswordReset(email);
@@ -73,6 +86,8 @@ const Auth = () => {
     }
     clearErrors();
     clearPassword();
+    setConfirmPassword('');
+    setConfirmPasswordError('');
   };
 
   const handleForgotPassword = () => {
@@ -106,15 +121,20 @@ const Auth = () => {
         <AuthForm
           isLogin={isLogin}
           isForgotPassword={isForgotPassword}
+          isPasswordReset={isPasswordReset}
           email={email}
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
+          confirmPassword={confirmPassword}
+          setConfirmPassword={setConfirmPassword}
           emailError={emailError}
           passwordError={passwordError}
+          confirmPasswordError={confirmPasswordError}
           setEmailError={setEmailError}
           setPasswordError={setPasswordError}
-          isSubmitting={isSubmitting || isSubmittingReset}
+          setConfirmPasswordError={setConfirmPasswordError}
+          isSubmitting={isSubmitting || isSubmittingReset || isSubmittingPasswordReset}
           onSubmit={handleSubmit}
           onModeSwitch={handleModeSwitch}
           onForgotPassword={handleForgotPassword}

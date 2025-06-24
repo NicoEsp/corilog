@@ -1,13 +1,15 @@
 
 import { Button } from '@/components/ui/button';
-import { Camera, Mail, ArrowLeft } from 'lucide-react';
+import { Camera, Mail, ArrowLeft, Lock } from 'lucide-react';
 
 interface AuthFormActionsProps {
   isLogin: boolean;
   isForgotPassword?: boolean;
+  isPasswordReset?: boolean;
   isSubmitting: boolean;
   email: string;
   password: string;
+  confirmPassword?: string;
   onModeSwitch: () => void;
   onForgotPassword?: () => void;
 }
@@ -15,13 +17,18 @@ interface AuthFormActionsProps {
 const AuthFormActions = ({
   isLogin,
   isForgotPassword = false,
+  isPasswordReset = false,
   isSubmitting,
   email,
   password,
+  confirmPassword,
   onModeSwitch,
   onForgotPassword
 }: AuthFormActionsProps) => {
   const getButtonText = () => {
+    if (isPasswordReset) {
+      return isSubmitting ? 'Actualizando contraseña...' : 'Actualizar contraseña';
+    }
     if (isForgotPassword) {
       return isSubmitting ? 'Enviando email...' : 'Enviar email de recuperación';
     }
@@ -31,11 +38,13 @@ const AuthFormActions = ({
   };
 
   const getButtonIcon = () => {
+    if (isPasswordReset) return <Lock className="w-4 h-4 mr-2" />;
     if (isForgotPassword) return <Mail className="w-4 h-4 mr-2" />;
     return <Camera className="w-4 h-4 mr-2" />;
   };
 
   const isButtonDisabled = () => {
+    if (isPasswordReset) return isSubmitting || !password || !confirmPassword;
     if (isForgotPassword) return isSubmitting || !email;
     return isSubmitting || !email || !password;
   };
@@ -70,7 +79,7 @@ const AuthFormActions = ({
             <ArrowLeft className="w-3 h-3" />
             ¿Recordaste tu contraseña? Volver al login
           </button>
-        ) : (
+        ) : !isPasswordReset && (
           <>
             <button
               type="button"
