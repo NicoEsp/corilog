@@ -121,7 +121,12 @@ const MonthSection = memo(({ monthName, moments, onMomentClick }: {
     {/* Tag del mes en el lado derecho */}
     <div className="absolute -right-16 top-2 z-10">
       <div className="bg-sage-100/80 text-sage-600 px-2 py-1 rounded-md text-xs font-medium border border-sage-200/50 shadow-sm">
-        {monthName}
+        <div className="text-center">
+          {monthName}
+        </div>
+        <div className="text-center text-[10px] mt-0.5 text-sage-500">
+          {moments.length}
+        </div>
       </div>
     </div>
 
