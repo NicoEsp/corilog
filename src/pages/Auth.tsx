@@ -9,7 +9,7 @@ import AuthForm from '@/components/auth/AuthForm';
 
 const Auth = () => {
   const { user, loading } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false); // Changed from true to false to default to sign-up
   
   // Use custom hooks
   useEmailConfirmation();
