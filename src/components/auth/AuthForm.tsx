@@ -5,6 +5,7 @@ import AuthFormActions from './AuthFormActions';
 
 interface AuthFormProps {
   isLogin: boolean;
+  isForgotPassword?: boolean;
   email: string;
   setEmail: (email: string) => void;
   password: string;
@@ -16,10 +17,12 @@ interface AuthFormProps {
   isSubmitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onModeSwitch: () => void;
+  onForgotPassword?: () => void;
 }
 
 const AuthForm = ({
   isLogin,
+  isForgotPassword = false,
   email,
   setEmail,
   password,
@@ -30,22 +33,34 @@ const AuthForm = ({
   setPasswordError,
   isSubmitting,
   onSubmit,
-  onModeSwitch
+  onModeSwitch,
+  onForgotPassword
 }: AuthFormProps) => {
+  const getTitle = () => {
+    if (isForgotPassword) return 'Restablecer contraseña';
+    return isLogin ? 'Bienvenida de vuelta' : 'Crear cuenta';
+  };
+
+  const getSubtitle = () => {
+    if (isForgotPassword) return 'Te enviaremos un enlace para restablecer tu contraseña';
+    return isLogin ? 'Accede a tus momentos especiales' : 'Comienza a guardar tus recuerdos';
+  };
+
   return (
     <Card className="bg-card paper-texture gentle-shadow border-sage-200/50">
       <form onSubmit={onSubmit} className="p-6 space-y-6">
         <div className="text-center">
           <h2 className="text-xl font-serif-elegant text-sage-800 mb-2">
-            {isLogin ? 'Bienvenida de vuelta' : 'Crear cuenta'}
+            {getTitle()}
           </h2>
           <p className="text-sm text-sage-600 handwritten">
-            {isLogin ? 'Accede a tus momentos especiales' : 'Comienza a guardar tus recuerdos'}
+            {getSubtitle()}
           </p>
         </div>
 
         <AuthFormFields
           isLogin={isLogin}
+          isForgotPassword={isForgotPassword}
           email={email}
           setEmail={setEmail}
           password={password}
@@ -58,10 +73,12 @@ const AuthForm = ({
 
         <AuthFormActions
           isLogin={isLogin}
+          isForgotPassword={isForgotPassword}
           isSubmitting={isSubmitting}
           email={email}
           password={password}
           onModeSwitch={onModeSwitch}
+          onForgotPassword={onForgotPassword}
         />
       </form>
     </Card>

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
@@ -5,11 +6,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmailConfirmation } from '@/hooks/useEmailConfirmation';
 import { useAuthForm } from '@/hooks/useAuthForm';
 import { useAuthSubmit } from '@/hooks/useAuthSubmit';
+import { useForgotPassword } from '@/hooks/useForgotPassword';
 import AuthForm from '@/components/auth/AuthForm';
 
 const Auth = () => {
   const { user, loading } = useAuth();
-  const [isLogin, setIsLogin] = useState(false); // Changed from true to false to default to sign-up
+  const [isLogin, setIsLogin] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   // Use custom hooks
   useEmailConfirmation();
@@ -27,6 +30,7 @@ const Auth = () => {
     setPasswordError
   } = useAuthForm(isLogin);
   const { isSubmitting, submitAuth } = useAuthSubmit();
+  const { isSubmitting: isSubmittingReset, sendPasswordReset } = useForgotPassword();
 
   // Redirigir si ya está autenticado
   if (!loading && user) {
@@ -35,21 +39,46 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isForgotPassword) {
+      const success = await sendPasswordReset(email);
+      if (success) {
+        // Switch back to login mode after successful reset
+        setIsForgotPassword(false);
+        setIsLogin(true);
+        clearPassword();
+        clearErrors();
+      }
+      return;
+    }
+
     const success = await submitAuth(isLogin, email, password, validateForm);
     
     if (success && !isLogin) {
       // Switch to login mode and keep the email
       setIsLogin(true);
-      clearPassword(); // Clear password for security
+      clearPassword();
       clearErrors();
     }
   };
 
   const handleModeSwitch = () => {
-    setIsLogin(!isLogin);
+    if (isForgotPassword) {
+      // From forgot password back to login
+      setIsForgotPassword(false);
+      setIsLogin(true);
+    } else {
+      // Switch between login and signup
+      setIsLogin(!isLogin);
+    }
     clearErrors();
-    // Don't clear email to make it easier for users
-    // Only clear password for security
+    clearPassword();
+  };
+
+  const handleForgotPassword = () => {
+    setIsForgotPassword(true);
+    setIsLogin(false);
+    clearErrors();
     clearPassword();
   };
 
@@ -76,6 +105,7 @@ const Auth = () => {
 
         <AuthForm
           isLogin={isLogin}
+          isForgotPassword={isForgotPassword}
           email={email}
           setEmail={setEmail}
           password={password}
@@ -84,9 +114,10 @@ const Auth = () => {
           passwordError={passwordError}
           setEmailError={setEmailError}
           setPasswordError={setPasswordError}
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || isSubmittingReset}
           onSubmit={handleSubmit}
           onModeSwitch={handleModeSwitch}
+          onForgotPassword={handleForgotPassword}
         />
       </div>
     </div>
