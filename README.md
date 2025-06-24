@@ -14,4 +14,7 @@ Por cualquier consulta, podes contactarte conmigo en: https://x.com/nicoproducto
 
 13/06 - Primera prueba con un usuario, no fue exitosa, problema en el login
 
-24/06 - Se solucionó error en el login y se inición prueba con Beta testers del MVP
+24/06 - 
+1. Se solucionó error en el login y se inición prueba con Beta testers del MVP
+2. En base al feedback, se agregó flow de cambio de contraseña y se detectó un bug en la creación de un nuevo momento
+
