@@ -57,7 +57,7 @@ export class MomentService {
   static async createMoment(userId: string, momentData: CreateMomentData): Promise<Moment | null> {
     // Sanitize and validate input
     const sanitizedTitle = sanitizeTitle(momentData.title);
-    const sanitizedNote = sanitizeNote(momentData.note);
+    const sanitizedNote = sanitizeNote(momentData.note || ''); // Allow empty notes
 
     if (!sanitizedTitle.trim()) {
       toast({
@@ -68,14 +68,8 @@ export class MomentService {
       return null;
     }
 
-    if (!sanitizedNote.trim()) {
-      toast({
-        title: "Error de validación",
-        description: "La nota es requerida",
-        variant: "destructive",
-      });
-      return null;
-    }
+    // Remove the note validation since it's optional
+    // Notes can be empty now
 
     if (!validateDate(momentData.date)) {
       toast({
@@ -91,7 +85,7 @@ export class MomentService {
         .from('moments')
         .insert([{
           title: sanitizedTitle,
-          note: sanitizedNote,
+          note: sanitizedNote, // This can now be empty
           date: momentData.date.toISOString().split('T')[0],
           photo: momentData.photo,
           user_id: userId
