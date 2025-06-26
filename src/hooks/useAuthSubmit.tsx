@@ -119,13 +119,13 @@ export const useAuthSubmit = () => {
           console.log('Rol asignado exitosamente');
           toast({
             title: "¡Cuenta creada exitosamente!",
-            description: "Revisa tu email para confirmar tu cuenta. Mientras tanto, ya puedes iniciar sesión.",
+            description: "Te hemos enviado un email de confirmación. Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.",
           });
         } else {
           console.log('Error asignando rol, pero usuario fue creado');
           toast({
             title: "¡Cuenta creada!",
-            description: "Revisa tu email para confirmar tu cuenta. Si tienes problemas de acceso, contacta al soporte.",
+            description: "Te hemos enviado un email de confirmación. Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.",
           });
         }
         return true;
