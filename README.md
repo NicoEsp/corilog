@@ -13,7 +13,7 @@ Por cualquier consulta, podes contactarte conmigo en: https://x.com/nicoproducto
 ## Changelog
 
 13/06
-Primera prueba con un usuario, no fue exitosa, problema en el login
+1. Primera prueba con un usuario, no fue exitosa, problema en el login
 
 24/06 
 1. Se solucionó error en el login y se inición prueba con Beta testers del MVP
