@@ -62,10 +62,10 @@ const AuthForm = ({
     <Card className="bg-card paper-texture gentle-shadow border-sage-200/50">
       <form onSubmit={onSubmit} className="p-6 space-y-6">
         <div className="text-center">
-          <h2 className="text-xl font-serif-elegant text-sage-800 mb-2">
+          <h2 className="text-xl font-semibold text-sage-800 mb-2">
             {getTitle()}
           </h2>
-          <p className="text-sm text-sage-600 handwritten">
+          <p className="text-sm text-sage-600 font-medium">
             {getSubtitle()}
           </p>
         </div>

@@ -107,9 +107,7 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				'handwritten': ['"Kalam"', 'cursive'],
-				'serif-elegant': ['"Crimson Text"', 'serif'],
-				'sans-warm': ['"Inter"', 'sans-serif']
+				'sans': ['"Inter"', 'sans-serif']
 			},
 			keyframes: {
 				'accordion-down': {

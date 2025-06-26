@@ -52,7 +52,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans-warm;
+    @apply bg-background text-foreground font-sans;
     background-image: 
       radial-gradient(circle at 25% 25%, rgba(248, 244, 235, 0.3) 0%, transparent 50%),
       radial-gradient(circle at 75% 75%, rgba(239, 214, 192, 0.2) 0%, transparent 50%);
@@ -61,11 +61,7 @@
   }
 
   h1, h2, h3 {
-    @apply font-serif-elegant;
-  }
-
-  .handwritten {
-    @apply font-handwritten;
+    @apply font-sans font-semibold;
   }
 
   /* Mejoras para dispositivos táctiles */

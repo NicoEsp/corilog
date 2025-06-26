@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Camera, Mail, ArrowLeft, Lock } from 'lucide-react';
+import { User, Mail, ArrowLeft, Lock } from 'lucide-react';
 
 interface AuthFormActionsProps {
   isLogin: boolean;
@@ -40,7 +40,8 @@ const AuthFormActions = ({
   const getButtonIcon = () => {
     if (isPasswordReset) return <Lock className="w-4 h-4 mr-2" />;
     if (isForgotPassword) return <Mail className="w-4 h-4 mr-2" />;
-    return <Camera className="w-4 h-4 mr-2" />;
+    if (!isLogin) return <User className="w-4 h-4 mr-2" />;
+    return null;
   };
 
   const isButtonDisabled = () => {
@@ -53,7 +54,7 @@ const AuthFormActions = ({
     <div className="space-y-4">
       <Button 
         type="submit" 
-        className="w-full bg-rose-400 hover:bg-rose-500 text-white" 
+        className="w-full bg-rose-600 hover:bg-rose-700 text-white font-medium shadow-sm" 
         disabled={isButtonDisabled()}
       >
         {isSubmitting ? (
@@ -74,7 +75,7 @@ const AuthFormActions = ({
           <button
             type="button"
             onClick={onModeSwitch}
-            className="text-sm text-sage-600 hover:text-sage-800 underline handwritten flex items-center justify-center gap-1"
+            className="text-sm text-sage-600 hover:text-sage-800 underline font-medium flex items-center justify-center gap-1"
           >
             <ArrowLeft className="w-3 h-3" />
             ¿Recordaste tu contraseña? Volver al login
@@ -84,7 +85,7 @@ const AuthFormActions = ({
             <button
               type="button"
               onClick={onModeSwitch}
-              className="text-sm text-sage-600 hover:text-sage-800 underline handwritten"
+              className="text-sm text-sage-600 hover:text-sage-800 underline font-medium"
             >
               {isLogin ? '¿No tienes cuenta? Crear una' : '¿Ya tienes cuenta? Iniciar sesión'}
             </button>
@@ -93,7 +94,7 @@ const AuthFormActions = ({
               <button
                 type="button"
                 onClick={onForgotPassword}
-                className="block text-sm text-rose-500 hover:text-rose-700 underline handwritten mx-auto"
+                className="block text-sm text-rose-600 hover:text-rose-800 underline font-medium mx-auto"
               >
                 ¿Olvidaste tu contraseña?
               </button>

@@ -74,16 +74,16 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
       
       <SheetContent side="right" className="w-80 sm:w-96">
         <SheetHeader className="text-left">
-          <SheetTitle className="font-serif-elegant text-sage-800">
+          <SheetTitle className="font-semibold text-sage-800">
             Menú
           </SheetTitle>
-          <p className="text-sm text-sage-600 handwritten">Opciones</p>
+          <p className="text-sm text-sage-600 font-medium">Opciones</p>
         </SheetHeader>
 
         <div className="flex flex-col gap-4 mt-6">
           <Button
             onClick={handleAddMoment}
-            className="w-full bg-rose-400 hover:bg-rose-500 text-white justify-start h-12 text-base"
+            className="w-full bg-rose-600 hover:bg-rose-700 text-white justify-start h-12 text-base"
           >
             <Camera className="w-5 h-5 mr-3" />
             Nuevo momento

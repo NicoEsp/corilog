@@ -112,10 +112,10 @@ const Auth = () => {
           <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8 text-rose-500" />
           </div>
-          <h1 className="text-3xl font-serif-elegant text-sage-800 mb-2">
+          <h1 className="text-3xl font-semibold text-sage-800 mb-2">
             Corilog
           </h1>
-          <p className="text-sage-600 handwritten">Tu diario privado digital</p>
+          <p className="text-sage-600 font-medium">Tu diario privado digital</p>
         </div>
 
         <AuthForm

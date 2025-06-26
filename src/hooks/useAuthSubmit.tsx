@@ -21,80 +21,133 @@ export const useAuthSubmit = () => {
       return false;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password
-    });
+    console.log('Iniciando login para mobile/desktop...');
     
-    if (error) {
-      // Record failed attempt
-      const { blocked } = authRateLimiter.recordAttempt(rateLimitKey);
-      logError(error, 'auth_signin');
+    try {
+      // Timeout para prevenir colgadas en mobile
+      const loginPromise = supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password
+      });
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Login timeout')), 30000); // 30 segundos
+      });
+
+      const { error } = await Promise.race([loginPromise, timeoutPromise]) as any;
       
-      if (blocked) {
-        const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
+      if (error) {
+        // Record failed attempt
+        const { blocked } = authRateLimiter.recordAttempt(rateLimitKey);
+        logError(error, 'auth_signin');
+        
+        if (blocked) {
+          const remainingTime = authRateLimiter.getRemainingBlockTime(rateLimitKey);
+          toast({
+            title: "Cuenta temporalmente bloqueada",
+            description: `Demasiados intentos fallidos. Espera ${remainingTime} minutos.`,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error de inicio de sesión",
+            description: getSecureErrorMessage(error),
+            variant: "destructive"
+          });
+        }
+        return false;
+      } else {
+        console.log('Login exitoso');
         toast({
-          title: "Cuenta temporalmente bloqueada",
-          description: `Demasiados intentos fallidos. Espera ${remainingTime} minutos.`,
+          title: "¡Bienvenida de vuelta!",
+          description: "Has iniciado sesión correctamente"
+        });
+        return true;
+      }
+    } catch (error: any) {
+      console.error('Error en login:', error);
+      if (error.message === 'Login timeout') {
+        toast({
+          title: "Conexión lenta",
+          description: "El login está tardando más de lo esperado. Verifica tu conexión.",
           variant: "destructive"
         });
       } else {
         toast({
-          title: "Error de inicio de sesión",
-          description: getSecureErrorMessage(error),
+          title: "Error de conexión",
+          description: "Problema de conectividad. Verifica tu internet.",
           variant: "destructive"
         });
       }
       return false;
-    } else {
-      toast({
-        title: "¡Bienvenida de vuelta!",
-        description: "Has iniciado sesión correctamente"
-      });
-      return true;
     }
   };
 
   const handleSignup = async (email: string, password: string) => {
     console.log('Iniciando registro de usuario...');
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        emailRedirectTo: 'https://corilog.lovable.app'
-      }
-    });
     
-    if (error) {
-      logError(error, 'auth_signup');
-      toast({
-        title: "Error de registro",
-        description: getSecureErrorMessage(error),
-        variant: "destructive"
+    try {
+      const signupPromise = supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: 'https://corilog.lovable.app'
+        }
       });
-      return false;
-    } else if (data.user) {
-      console.log('Usuario registrado exitosamente, asignando rol...');
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Signup timeout')), 30000); // 30 segundos
+      });
+
+      const { data, error } = await Promise.race([signupPromise, timeoutPromise]) as any;
       
-      // Asignar rol automáticamente después del registro exitoso
-      const roleResult = await assignUserRole(data.user.id, email.trim().toLowerCase());
-      
-      if (roleResult.success) {
-        console.log('Rol asignado exitosamente');
+      if (error) {
+        logError(error, 'auth_signup');
         toast({
-          title: "¡Cuenta creada exitosamente!",
-          description: "Revisa tu email para confirmar tu cuenta. Mientras tanto, ya puedes iniciar sesión.",
+          title: "Error de registro",
+          description: getSecureErrorMessage(error),
+          variant: "destructive"
+        });
+        return false;
+      } else if (data.user) {
+        console.log('Usuario registrado exitosamente, asignando rol...');
+        
+        // Asignar rol automáticamente después del registro exitoso
+        const roleResult = await assignUserRole(data.user.id, email.trim().toLowerCase());
+        
+        if (roleResult.success) {
+          console.log('Rol asignado exitosamente');
+          toast({
+            title: "¡Cuenta creada exitosamente!",
+            description: "Revisa tu email para confirmar tu cuenta. Mientras tanto, ya puedes iniciar sesión.",
+          });
+        } else {
+          console.log('Error asignando rol, pero usuario fue creado');
+          toast({
+            title: "¡Cuenta creada!",
+            description: "Revisa tu email para confirmar tu cuenta. Si tienes problemas de acceso, contacta al soporte.",
+          });
+        }
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Error en signup:', error);
+      if (error.message === 'Signup timeout') {
+        toast({
+          title: "Conexión lenta",
+          description: "El registro está tardando más de lo esperado. Verifica tu conexión.",
+          variant: "destructive"
         });
       } else {
-        console.log('Error asignando rol, pero usuario fue creado');
         toast({
-          title: "¡Cuenta creada!",
-          description: "Revisa tu email para confirmar tu cuenta. Si tienes problemas de acceso, contacta al soporte.",
+          title: "Error de conexión",
+          description: "Problema de conectividad. Verifica tu internet.",
+          variant: "destructive"
         });
       }
-      return true;
+      return false;
     }
-    return false;
   };
 
   const submitAuth = async (
@@ -103,27 +156,31 @@ export const useAuthSubmit = () => {
     password: string,
     validateForm: () => boolean
   ) => {
-    if (!validateForm()) return;
+    if (!validateForm()) return false;
 
     setIsSubmitting(true);
     
     try {
+      let success = false;
       if (isLogin) {
-        await handleLogin(email, password);
+        success = await handleLogin(email, password);
       } else {
-        const success = await handleSignup(email, password);
-        return success;
+        success = await handleSignup(email, password);
       }
+      return success;
     } catch (error) {
+      console.error('Error general en auth:', error);
       logError(error, 'auth_general');
       toast({
         title: "Error inesperado",
         description: getSecureErrorMessage(error),
         variant: "destructive"
       });
+      return false;
+    } finally {
+      // Asegurar que siempre se ejecute setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   return {

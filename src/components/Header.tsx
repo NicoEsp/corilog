@@ -50,10 +50,10 @@ const Header = ({ onAddMoment }: HeaderProps) => {
       <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         {/* Logo - Responsive sizing */}
         <div className="flex-shrink-0">
-          <h1 className="text-xl sm:text-2xl font-serif-elegant text-sage-800 mb-0 sm:mb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-sage-800 mb-0 sm:mb-1">
             Corilog
           </h1>
-          <p className="text-xs sm:text-sm text-sage-600 handwritten hidden sm:block">
+          <p className="text-xs sm:text-sm text-sage-600 font-medium hidden sm:block">
             Tu diario privado digital
           </p>
         </div>
@@ -70,7 +70,7 @@ const Header = ({ onAddMoment }: HeaderProps) => {
           
           <Button 
             onClick={onAddMoment} 
-            className="bg-rose-400 hover:bg-rose-500 text-white shadow-sm transition-all duration-200 hover:scale-105" 
+            className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all duration-200 hover:scale-105" 
             size="sm"
           >
             <Camera className="w-4 h-4 mr-2" />
@@ -94,7 +94,7 @@ const Header = ({ onAddMoment }: HeaderProps) => {
         <div className="flex md:hidden items-center gap-2">
           <Button 
             onClick={onAddMoment} 
-            className="bg-rose-400 hover:bg-rose-500 text-white shadow-sm" 
+            className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm" 
             size="sm"
           >
             <Camera className="w-4 h-4 mr-1" />
