@@ -149,7 +149,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-rose-400 hover:bg-rose-500 text-white h-12 sm:h-11 text-base touch-manipulation"
+              className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 sm:h-11 text-base touch-manipulation"
               disabled={!title.trim()}
             >
               <Check className="w-5 h-5 sm:w-4 sm:h-4 mr-2" />

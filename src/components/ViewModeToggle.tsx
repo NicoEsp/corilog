@@ -14,7 +14,7 @@ const ViewModeToggle = ({ viewMode, onViewModeChange }: ViewModeToggleProps) => 
         variant={viewMode === 'list' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onViewModeChange('list')}
-        className={viewMode === 'list' ? 'bg-rose-400 hover:bg-rose-500' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
+        className={viewMode === 'list' ? 'bg-primary hover:bg-primary/90' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
       >
         <List className="w-4 h-4 mr-2" />
         Lista
@@ -23,7 +23,7 @@ const ViewModeToggle = ({ viewMode, onViewModeChange }: ViewModeToggleProps) => 
         variant={viewMode === 'timeline' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onViewModeChange('timeline')}
-        className={viewMode === 'timeline' ? 'bg-rose-400 hover:bg-rose-500' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
+        className={viewMode === 'timeline' ? 'bg-primary hover:bg-primary/90' : 'border-sage-200 text-sage-600 hover:bg-sage-50'}
       >
         <Calendar className="w-4 h-4 mr-2" />
         Línea de tiempo
