@@ -50,8 +50,8 @@ ip_version = "ipv4"
 [auth]
 enabled = true
 port = 54327
-site_url = "https://corilog.lovable.app"
-additional_redirect_urls = ["https://corilog.lovable.app", "http://127.0.0.1:3000"]
+site_url = "https://corilog.app"
+additional_redirect_urls = ["https://corilog.app", "https://corilog.lovable.app", "http://127.0.0.1:3000"]
 jwt_expiry = 3600
 refresh_token_rotation_enabled = true
 refresh_token_reuse_interval = 10
