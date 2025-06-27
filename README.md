@@ -24,3 +24,6 @@ Por cualquier consulta, podes contactarte conmigo en: https://x.com/nicoproducto
 2. Se resuelve demora en el mail de validación al momento de crear la cuenta
 3. Se optimizan flows
 4. Se empieza a desarrollar features: Carta al Futuro y E-book
+
+27/06
+1. Se lanza MVP, comunicandolo X (ex Twitter)
