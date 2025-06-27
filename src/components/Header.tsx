@@ -2,9 +2,9 @@
 import { Camera, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRole } from '@/contexts/RoleContext';
 import AccountDropdown from './AccountDropdown';
 import MobileNav from './MobileNav';
-import { useUserRole } from '@/hooks/useUserRole';
 
 interface HeaderProps {
   onAddMoment: () => void;
@@ -12,7 +12,7 @@ interface HeaderProps {
 
 const Header = ({ onAddMoment }: HeaderProps) => {
   const { user, signOut } = useAuth();
-  const { role, loading: roleLoading } = useUserRole();
+  const { role, loading: roleLoading } = useRole();
 
   const handleSignOut = async () => {
     await signOut();
