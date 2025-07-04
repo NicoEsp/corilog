@@ -42,6 +42,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_moments: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          moment_id: string
+          recipient_email_1: string
+          recipient_email_2: string | null
+          share_token: string
+          shared_by_user_id: string
+          updated_at: string
+          view_count_email_1: number
+          view_count_email_2: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          moment_id: string
+          recipient_email_1: string
+          recipient_email_2?: string | null
+          share_token?: string
+          shared_by_user_id: string
+          updated_at?: string
+          view_count_email_1?: number
+          view_count_email_2?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          moment_id?: string
+          recipient_email_1?: string
+          recipient_email_2?: string | null
+          share_token?: string
+          shared_by_user_id?: string
+          updated_at?: string
+          view_count_email_1?: number
+          view_count_email_2?: number
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string
