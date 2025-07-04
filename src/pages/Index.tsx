@@ -6,7 +6,7 @@ import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
 import LoadMoreMoments from '@/components/LoadMoreMoments';
-import EmptyState from '@/components/EmptyState';
+import WelcomeScreen from '@/components/WelcomeScreen';
 import MomentsHeader from '@/components/MomentsHeader';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 
@@ -19,6 +19,7 @@ const Index = () => {
     fetchNextPage,
     createMoment, 
     deleteMoment, 
+    toggleFeatured,
     isCreating 
   } = useInfiniteMomentsQuery();
   
@@ -33,6 +34,10 @@ const Index = () => {
 
   const handleDeleteMoment = async (momentId: string) => {
     deleteMoment(momentId);
+  };
+
+  const handleToggleFeatured = async (momentId: string, isFeatured: boolean) => {
+    toggleFeatured({ momentId, isFeatured });
   };
 
   const handleLoadMore = () => {
@@ -65,6 +70,7 @@ const Index = () => {
         moment={selectedMoment} 
         onBack={() => setSelectedMoment(null)}
         onDelete={handleDeleteMoment}
+        onToggleFeatured={handleToggleFeatured}
       />
     );
   }
@@ -75,7 +81,7 @@ const Index = () => {
       
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-safe">
         {moments.length === 0 && !isLoading ? (
-          <EmptyState 
+          <WelcomeScreen 
             onAddMoment={() => setShowAddForm(true)}
             isCreating={isCreating}
           />
@@ -100,6 +106,7 @@ const Index = () => {
                       moment={moment} 
                       onClick={() => setSelectedMoment(moment)}
                       onDelete={handleDeleteMoment}
+                      onToggleFeatured={handleToggleFeatured}
                     />
                   </div>
                 ))}

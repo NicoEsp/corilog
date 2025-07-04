@@ -20,15 +20,24 @@ const TimelineMomentItem = memo(({ moment, onClick }: TimelineMomentItemProps) =
 
   return (
     <div className="relative">
-      {/* Punto en la línea */}
-      <div className="absolute -left-16 top-4 w-3 h-3 bg-rose-400 rounded-full border-2 border-background shadow-sm"></div>
+      {/* Punto en la línea - destacado con color dorado */}
+      <div className={`absolute -left-16 top-4 w-3 h-3 rounded-full border-2 border-background shadow-sm ${
+        moment.is_featured ? 'bg-amber-400' : 'bg-rose-400'
+      }`}></div>
 
       {/* Card del momento */}
       <Card 
-        className="bg-card paper-texture gentle-shadow hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] border-sage-200/50 group"
+        className={`bg-card paper-texture gentle-shadow hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] border-sage-200/50 group ${
+          moment.is_featured ? 'border-amber-300/50 bg-gradient-to-br from-amber-50/20 to-transparent' : ''
+        }`}
         onClick={onClick}
       >
         <div className="p-4 sm:p-6">
+          {/* Indicador de destacado */}
+          {moment.is_featured && (
+            <div className="absolute top-2 left-2 w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+          )}
+          
           <div className="flex items-start gap-3 sm:gap-4">
             {moment.photo ? (
               <LazyImage 

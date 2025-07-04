@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -6,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { ArrowLeft, Image, Trash2, Share } from 'lucide-react';
 import DeleteMomentDialog from './DeleteMomentDialog';
 import ShareMomentModal from './ShareMomentModal';
+import FeaturedButton from './FeaturedButton';
 
 interface Moment {
   id: string;
@@ -13,15 +15,17 @@ interface Moment {
   note: string;
   date: Date;
   photo?: string;
+  is_featured: boolean;
 }
 
 interface MomentDetailProps {
   moment: Moment;
   onBack: () => void;
   onDelete: (momentId: string) => void;
+  onToggleFeatured?: (momentId: string, isFeatured: boolean) => void;
 }
 
-const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
+const MomentDetail = ({ moment, onBack, onDelete, onToggleFeatured }: MomentDetailProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -31,6 +35,12 @@ const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
 
   const handleShareClick = () => {
     setShowShareModal(true);
+  };
+
+  const handleToggleFeatured = () => {
+    if (onToggleFeatured) {
+      onToggleFeatured(moment.id, !moment.is_featured);
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -55,6 +65,14 @@ const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
               </Button>
 
               <div className="flex gap-2">
+                {onToggleFeatured && (
+                  <FeaturedButton
+                    isFeatured={moment.is_featured}
+                    onToggle={handleToggleFeatured}
+                    className="h-9 px-3"
+                    size="default"
+                  />
+                )}
                 <Button
                   variant="ghost"
                   onClick={handleShareClick}
@@ -77,16 +95,23 @@ const MomentDetail = ({ moment, onBack, onDelete }: MomentDetailProps) => {
         </header>
 
         <div className="container mx-auto px-4 py-6 sm:py-8 max-w-2xl">
-          <Card className="bg-card paper-texture gentle-shadow border-sage-200/50 animate-fade-in">
+          <Card className={`bg-card paper-texture gentle-shadow border-sage-200/50 animate-fade-in ${
+            moment.is_featured ? 'border-amber-300/50 bg-gradient-to-br from-amber-50/20 to-transparent' : ''
+          }`}>
             <div className="p-4 sm:p-6 lg:p-8">
               <div className="text-center mb-6 sm:mb-8">
                 <time className="text-sm text-sage-500 handwritten block mb-3 sm:mb-4">
                   {format(moment.date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
                 </time>
                 
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif-elegant text-sage-800 leading-relaxed px-2">
-                  {moment.title}
-                </h1>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  {moment.is_featured && (
+                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                  )}
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif-elegant text-sage-800 leading-relaxed px-2">
+                    {moment.title}
+                  </h1>
+                </div>
               </div>
 
               {moment.photo && (

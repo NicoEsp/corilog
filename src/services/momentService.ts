@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Moment, CreateMomentData } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
@@ -7,11 +8,12 @@ import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
 export class MomentService {
   static async fetchMoments(userId: string, limit: number = 20, offset: number = 0): Promise<Moment[]> {
     try {
-      // Query optimizada usando el índice (user_id, date DESC)
+      // Query optimizada usando el índice (is_featured DESC, date DESC)
       const { data, error } = await supabase
         .from('moments')
         .select('*')
         .eq('user_id', userId)
+        .order('is_featured', { ascending: false })
         .order('date', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -68,9 +70,6 @@ export class MomentService {
       return null;
     }
 
-    // Remove the note validation since it's optional
-    // Notes can be empty now
-
     if (!validateDate(momentData.date)) {
       toast({
         title: "Error de validación",
@@ -85,10 +84,11 @@ export class MomentService {
         .from('moments')
         .insert([{
           title: sanitizedTitle,
-          note: sanitizedNote, // This can now be empty
+          note: sanitizedNote,
           date: momentData.date.toISOString().split('T')[0],
           photo: momentData.photo,
-          user_id: userId
+          user_id: userId,
+          is_featured: false
         }])
         .select()
         .single();
@@ -144,6 +144,38 @@ export class MomentService {
       return true;
     } catch (error) {
       logError(error, 'delete_moment_general');
+      return false;
+    }
+  }
+
+  static async toggleFeaturedMoment(userId: string, momentId: string, isFeatured: boolean): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('moments')
+        .update({ is_featured: isFeatured })
+        .eq('id', momentId)
+        .eq('user_id', userId);
+
+      if (error) {
+        logError(error, 'toggle_featured_moment');
+        toast({
+          title: "Error",
+          description: getSecureErrorMessage(error),
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      toast({
+        title: isFeatured ? "Momento destacado" : "Momento no destacado",
+        description: isFeatured 
+          ? "Tu momento ha sido marcado como destacado" 
+          : "Tu momento ya no está destacado",
+      });
+
+      return true;
+    } catch (error) {
+      logError(error, 'toggle_featured_moment_general');
       return false;
     }
   }

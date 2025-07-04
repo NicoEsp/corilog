@@ -55,6 +55,7 @@ export const useInfiniteMomentsQuery = () => {
         id: `temp-${Date.now()}`,
         ...newMoment,
         user_id: user!.id,
+        is_featured: false,
       };
 
       // Optimistic update - agregar al inicio de la primera página
@@ -129,6 +130,48 @@ export const useInfiniteMomentsQuery = () => {
     },
   });
 
+  // Mutation para destacar/no destacar momento
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: async ({ momentId, isFeatured }: { momentId: string; isFeatured: boolean }) => {
+      if (!user) throw new Error('Usuario no autenticado');
+      const success = await MomentService.toggleFeaturedMoment(user.id, momentId, isFeatured);
+      if (!success) throw new Error('Error al cambiar estado destacado');
+      return { momentId, isFeatured };
+    },
+    onMutate: async ({ momentId, isFeatured }) => {
+      await queryClient.cancelQueries({ queryKey: [MOMENTS_QUERY_KEY] });
+      
+      const previousData = queryClient.getQueryData([MOMENTS_QUERY_KEY, user?.id]);
+      
+      // Optimistic update - cambiar estado destacado
+      queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id], (old: any) => {
+        if (!old?.pages) return old;
+        
+        const newPages = old.pages.map((page: any) => ({
+          ...page,
+          moments: page.moments.map((moment: Moment) => 
+            moment.id === momentId 
+              ? { ...moment, is_featured: isFeatured }
+              : moment
+          ),
+        }));
+        
+        return { ...old, pages: newPages };
+      });
+
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id], context.previousData);
+      }
+    },
+    onSuccess: () => {
+      // Refetch para reordenar (destacados primero)
+      queryClient.invalidateQueries({ queryKey: [MOMENTS_QUERY_KEY, user?.id] });
+    },
+  });
+
   // Aplanar todos los momentos de todas las páginas
   const allMoments = momentsQuery.data?.pages.flatMap(page => page.moments) || [];
 
@@ -142,7 +185,9 @@ export const useInfiniteMomentsQuery = () => {
     refetch: momentsQuery.refetch,
     createMoment: createMomentMutation.mutate,
     deleteMoment: deleteMomentMutation.mutate,
+    toggleFeatured: toggleFeaturedMutation.mutate,
     isCreating: createMomentMutation.isPending,
     isDeleting: deleteMomentMutation.isPending,
+    isTogglingFeatured: toggleFeaturedMutation.isPending,
   };
 };
