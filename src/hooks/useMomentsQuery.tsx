@@ -47,6 +47,7 @@ export const useMomentsQuery = (limit: number = 20, offset: number = 0) => {
         id: `temp-${Date.now()}`,
         ...newMoment,
         user_id: user!.id,
+        is_featured: false,
       };
 
       queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset], (old: Moment[] = []) => 
