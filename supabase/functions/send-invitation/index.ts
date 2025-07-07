@@ -1,15 +1,17 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+const siteUrl = Deno.env.get('SITE_URL') || 'https://corilog.app';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://corilog.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Credentials": "true",
 };
 
 interface InvitationRequest {
@@ -27,96 +29,95 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { shareToken, recipientEmails, momentTitle, senderName }: InvitationRequest = await req.json();
+    
+    console.log('Sending invitations:', { shareToken, recipientEmails, momentTitle, senderName });
 
-    console.log('Sending invitation emails:', { shareToken, recipientEmails, momentTitle, senderName });
-
-    const results = [];
-
-    for (const recipientEmail of recipientEmails) {
-      const encodedEmail = btoa(recipientEmail);
-      const shareUrl = `${Deno.env.get('SITE_URL') || 'http://localhost:8080'}/shared/${shareToken}?email=${encodedEmail}`;
-
-      const emailHtml = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>Momento Compartido</title>
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; background: #f9fafb; margin: 0; padding: 20px; }
-              .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-              .header { background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); padding: 40px 30px; text-align: center; }
-              .header h1 { margin: 0; color: #7c3aed; font-size: 28px; font-weight: 600; }
-              .content { padding: 40px 30px; }
-              .moment-card { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }
-              .moment-title { font-size: 20px; font-weight: 600; color: #6b21a8; margin: 0 0 10px 0; }
-              .shared-by { color: #6b7280; font-size: 14px; }
-              .cta-button { display: inline-block; background: #f472b6; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
-              .cta-button:hover { background: #ec4899; }
-              .footer { background: #f9fafb; padding: 20px 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>💝 Momento Especial Compartido</h1>
-              </div>
-              <div class="content">
-                <p>¡Hola!</p>
-                <p><strong>${senderName}</strong> ha compartido un momento especial contigo:</p>
-                
-                <div class="moment-card">
-                  <div class="moment-title">${momentTitle}</div>
-                  <div class="shared-by">Compartido por ${senderName}</div>
-                </div>
-                
-                <p>Haz clic en el botón de abajo para ver este momento:</p>
-                
-                <div style="text-align: center;">
-                  <a href="${shareUrl}" class="cta-button">Ver Momento 💫</a>
-                </div>
-                
-                <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">
-                  Si no puedes hacer clic en el botón, copia y pega este enlace en tu navegador:<br>
-                  <a href="${shareUrl}" style="color: #7c3aed;">${shareUrl}</a>
-                </p>
-              </div>
-              <div class="footer">
-                <p>Este es un momento especial compartido desde Corilog.</p>
-                <p>Si no esperabas este correo, puedes ignorarlo de forma segura.</p>
-              </div>
-            </div>
-          </body>
-        </html>
-      `;
-
-      const emailResponse = await resend.emails.send({
-        from: "Corilog <onboarding@resend.dev>",
-        to: [recipientEmail],
-        subject: `${senderName} compartió un momento especial contigo: "${momentTitle}"`,
-        html: emailHtml,
+    if (!shareToken || !recipientEmails || recipientEmails.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'Faltan datos requeridos' 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       });
-
-      console.log("Email sent successfully:", emailResponse);
-      results.push({ email: recipientEmail, success: true, messageId: emailResponse.data?.id });
     }
 
+    const shareUrl = `${siteUrl}/shared/${shareToken}`;
+    
+    // Send emails using Resend
+    for (const email of recipientEmails) {
+      const emailData = {
+        from: 'Corilog <no-reply@corilog.app>',
+        to: [email],
+        subject: `${senderName} compartió un momento especial contigo`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #4a5568; font-size: 28px; margin: 0;">Corilog</h1>
+                <p style="color: #718096; margin: 10px 0 0 0;">Momentos que importan</p>
+              </div>
+              
+              <h2 style="color: #2d3748; font-size: 24px; margin-bottom: 20px;">¡Tienes un momento especial esperándote!</h2>
+              
+              <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                <strong>${senderName}</strong> quiere compartir contigo el momento "${momentTitle}".
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${shareUrl}?email=${encodeURIComponent(email)}" 
+                   style="background-color: #e53e3e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px;">
+                  Ver Momento
+                </a>
+              </div>
+              
+              <p style="color: #718096; font-size: 14px; line-height: 1.5; margin-top: 30px;">
+                Este enlace es personal y privado. Solo tú puedes acceder a este momento especial.
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+              
+              <p style="color: #a0aec0; font-size: 12px; text-align: center; margin: 0;">
+                Este mensaje fue enviado desde Corilog. Si no esperabas este email, puedes ignorarlo.
+              </p>
+            </div>
+          </div>
+        `,
+      };
+
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error sending email to ${email}:`, errorText);
+        throw new Error(`Error enviando email a ${email}`);
+      }
+
+      console.log(`Email sent successfully to ${email}`);
+    }
+
+    console.log('All invitations sent successfully');
+
     return new Response(JSON.stringify({ 
-      success: true, 
-      results 
+      success: true,
+      message: `${recipientEmails.length} invitación(es) enviada(s) exitosamente`
     }), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
+
   } catch (error: any) {
-    console.error("Error sending invitation email:", error);
+    console.error("Error sending invitations:", error);
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Error sending email' 
+        error: 'Error interno del servidor',
+        details: error.message 
       }),
       {
         status: 500,

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SharedMoment, CreateSharedMomentData, SharedMomentAccess } from '@/types/sharedMoment';
 import { toast } from '@/hooks/use-toast';
