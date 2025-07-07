@@ -2,26 +2,17 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { queryClient } from "@/lib/queryClient";
-import { Suspense, lazy } from "react";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+import SharedMoment from "./pages/SharedMoment";
 
-// Lazy loading para componentes pesados
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const SharedMoment = lazy(() => import("./pages/SharedMoment"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-
-// Componente de loading optimizado
-const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600"></div>
-  </div>
-);
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -31,18 +22,16 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/shared/:token" element={<SharedMoment />} />
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/shared/:token" element={<SharedMoment />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </BrowserRouter>
         </RoleProvider>
       </AuthProvider>

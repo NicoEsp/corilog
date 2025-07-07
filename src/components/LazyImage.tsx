@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Image } from 'lucide-react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
@@ -11,40 +11,30 @@ interface LazyImageProps {
 }
 
 const LazyImage = ({ src, alt, className = '', placeholder }: LazyImageProps) => {
-  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: '50px',
   });
-  const imgRef = useRef<HTMLImageElement | null>(null);
-
-  // Memoizar callbacks para evitar recreación
-  const handleLoad = useCallback(() => {
-    setLoadState('loaded');
-  }, []);
-
-  const handleError = useCallback(() => {
-    setLoadState('error');
-  }, []);
 
   // Comenzar a cargar la imagen cuando sea visible
   useEffect(() => {
-    if (isIntersecting && loadState === 'idle') {
-      setLoadState('loading');
+    if (isIntersecting && !shouldLoad) {
+      setShouldLoad(true);
     }
-  }, [isIntersecting, loadState]);
+  }, [isIntersecting, shouldLoad]);
 
-  // Cleanup de imagen si el componente se desmonta
-  useEffect(() => {
-    return () => {
-      if (imgRef.current) {
-        imgRef.current.onload = null;
-        imgRef.current.onerror = null;
-      }
-    };
-  }, []);
+  const handleLoad = () => {
+    setIsLoaded(true);
+  };
 
-  if (loadState === 'error') {
+  const handleError = () => {
+    setIsError(true);
+  };
+
+  if (isError) {
     return (
       <div ref={ref} className={`bg-sage-100 flex items-center justify-center ${className}`}>
         <Image className="w-6 h-6 text-sage-400" />
@@ -55,20 +45,19 @@ const LazyImage = ({ src, alt, className = '', placeholder }: LazyImageProps) =>
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
       {/* Placeholder mientras carga */}
-      {loadState !== 'loaded' && (
+      {!isLoaded && (
         <div className="absolute inset-0 bg-sage-100 animate-pulse flex items-center justify-center">
           {placeholder || <Image className="w-6 h-6 text-sage-400" />}
         </div>
       )}
       
       {/* Imagen real */}
-      {loadState !== 'idle' && (
+      {shouldLoad && (
         <img
-          ref={imgRef}
           src={src}
           alt={alt}
           className={`w-full h-full object-cover transition-opacity duration-300 ${
-            loadState === 'loaded' ? 'opacity-100' : 'opacity-0'
+            isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           onLoad={handleLoad}
           onError={handleError}

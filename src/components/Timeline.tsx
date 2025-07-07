@@ -9,37 +9,32 @@ interface TimelineProps {
 }
 
 const Timeline = memo(({ moments, onMomentClick }: TimelineProps) => {
-  // Memoizar el agrupamiento por año y mes con shallow comparison
+  // Memoizar el agrupamiento por año y mes para evitar recálculos
   const momentsByYearAndMonth = useMemo(() => {
-    const groupedData = {} as Record<string, Record<string, Moment[]>>;
-    
-    moments.forEach((moment) => {
+    return moments.reduce((acc, moment) => {
       const year = moment.date.getFullYear();
       const month = moment.date.getMonth();
       const yearKey = year.toString();
       const monthKey = `${year}-${month}`;
       
-      if (!groupedData[yearKey]) {
-        groupedData[yearKey] = {};
+      if (!acc[yearKey]) {
+        acc[yearKey] = {};
       }
-      if (!groupedData[yearKey][monthKey]) {
-        groupedData[yearKey][monthKey] = [];
+      if (!acc[yearKey][monthKey]) {
+        acc[yearKey][monthKey] = [];
       }
-      groupedData[yearKey][monthKey].push(moment);
-    });
-    
-    return groupedData;
+      acc[yearKey][monthKey].push(moment);
+      return acc;
+    }, {} as Record<string, Record<string, Moment[]>>);
   }, [moments]);
 
-  // Memoizar los años ordenados
-  const sortedYears = useMemo(() => 
+  const years = useMemo(() => 
     Object.keys(momentsByYearAndMonth)
       .map(Number)
       .sort((a, b) => b - a),
     [momentsByYearAndMonth]
   );
 
-  // Early return para caso vacío
   if (moments.length === 0) {
     return (
       <div className="text-center py-8">
@@ -52,7 +47,7 @@ const Timeline = memo(({ moments, onMomentClick }: TimelineProps) => {
 
   return (
     <div className="space-y-8">
-      {sortedYears.map((year) => (
+      {years.map((year) => (
         <TimelineYearSection 
           key={year} 
           year={year} 
