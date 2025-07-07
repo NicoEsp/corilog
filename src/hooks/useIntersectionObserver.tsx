@@ -11,36 +11,39 @@ const createObserverManager = () => {
   const observerMap = new Map<string, IntersectionObserver>();
   const elementMap = new WeakMap<Element, () => void>();
   
-  return {
-    getObserver: (options: IntersectionObserverInit) => {
-      const key = `${options.threshold}-${options.rootMargin}`;
-      
-      if (!observerMap.has(key)) {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            const callback = elementMap.get(entry.target);
-            if (callback) {
-              callback();
-            }
-          });
-        }, options);
-        
-        observerMap.set(key, observer);
-      }
-      
-      return observerMap.get(key)!;
-    },
+  const getObserver = (options: IntersectionObserverInit): IntersectionObserver => {
+    const key = `${options.threshold}-${options.rootMargin}`;
     
-    observe: (element: Element, callback: () => void, options: IntersectionObserverInit) => {
-      const observer = this.getObserver(options);
-      elementMap.set(element, callback);
-      observer.observe(element);
+    if (!observerMap.has(key)) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const callback = elementMap.get(entry.target);
+          if (callback) {
+            callback();
+          }
+        });
+      }, options);
       
-      return () => {
-        observer.unobserve(element);
-        elementMap.delete(element);
-      };
+      observerMap.set(key, observer);
     }
+    
+    return observerMap.get(key)!;
+  };
+  
+  const observe = (element: Element, callback: () => void, options: IntersectionObserverInit) => {
+    const observer = getObserver(options);
+    elementMap.set(element, callback);
+    observer.observe(element);
+    
+    return () => {
+      observer.unobserve(element);
+      elementMap.delete(element);
+    };
+  };
+
+  return {
+    getObserver,
+    observe
   };
 };
 
