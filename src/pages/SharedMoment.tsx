@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -17,31 +18,65 @@ const SharedMoment = () => {
 
   useEffect(() => {
     const loadSharedMoment = async () => {
+      console.log('=== CARGANDO MOMENTO COMPARTIDO ===');
+      console.log('Token:', token);
+      console.log('Search params:', Object.fromEntries(searchParams.entries()));
+      
       if (!token) {
+        console.log('ERROR: Token no válido');
         setError('Token de acceso no válido');
         setLoading(false);
         return;
       }
 
       const encodedEmail = searchParams.get('email');
+      console.log('Email codificado recibido:', encodedEmail);
+      
       if (!encodedEmail) {
+        console.log('ERROR: Email no encontrado en la URL');
         setError('Email de acceso no válido');
         setLoading(false);
         return;
       }
 
       try {
-        const email = atob(encodedEmail);
+        let email: string;
+        
+        // Intentar decodificar el email como base64
+        try {
+          email = atob(encodedEmail);
+          console.log('Email decodificado (base64):', email);
+        } catch (decodeError) {
+          // Si falla la decodificación base64, usar el email tal como está
+          email = decodeURIComponent(encodedEmail);
+          console.log('Email decodificado (URL):', email);
+        }
+        
+        console.log('Email final para validación:', email);
+        
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          console.log('ERROR: Formato de email inválido');
+          setError('Formato de email no válido');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Llamando a SharedMomentService.getSharedMomentAccess...');
         const access = await SharedMomentService.getSharedMomentAccess(token, email);
+        console.log('Respuesta del servicio:', access);
         
         if (access && access.isValid) {
+          console.log('Acceso válido, configurando momento');
           setMomentAccess(access);
         } else {
+          console.log('Acceso inválido:', access?.error);
           setError(access?.error || 'No se pudo acceder al momento');
         }
       } catch (error) {
-        console.error('Error decoding email or accessing moment:', error);
-        setError('Link de acceso no válido');
+        console.error('Error al procesar el momento compartido:', error);
+        setError('Error al procesar el enlace de acceso');
       } finally {
         setLoading(false);
       }
@@ -72,6 +107,17 @@ const SharedMoment = () => {
           <p className="text-sage-600 mb-6">
             {error}
           </p>
+          <div className="space-y-2 mb-6">
+            <p className="text-xs text-sage-500">
+              Debug info:
+            </p>
+            <p className="text-xs text-sage-400 font-mono">
+              Token: {token?.substring(0, 8)}...
+            </p>
+            <p className="text-xs text-sage-400 font-mono">
+              Email param: {new URLSearchParams(window.location.search).get('email')?.substring(0, 10)}...
+            </p>
+          </div>
           <Link to="/">
             <Button variant="outline" className="border-sage-300 text-sage-600 hover:bg-sage-50">
               Ir a Corilog
