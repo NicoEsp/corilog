@@ -7,7 +7,7 @@ interface UseIntersectionObserverProps {
 }
 
 // Singleton observer para reutilizar instancias
-const createObserverMap = () => {
+const createObserverManager = () => {
   const observerMap = new Map<string, IntersectionObserver>();
   const elementMap = new WeakMap<Element, () => void>();
   
@@ -32,7 +32,7 @@ const createObserverMap = () => {
     },
     
     observe: (element: Element, callback: () => void, options: IntersectionObserverInit) => {
-      const observer = observerMap.getObserver(options);
+      const observer = this.getObserver(options);
       elementMap.set(element, callback);
       observer.observe(element);
       
@@ -44,7 +44,7 @@ const createObserverMap = () => {
   };
 };
 
-const observerManager = createObserverMap();
+const observerManager = createObserverManager();
 
 export const useIntersectionObserver = ({
   threshold = 1.0,
