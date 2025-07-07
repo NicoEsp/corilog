@@ -1,4 +1,3 @@
-
 import { Card } from '@/components/ui/card';
 import AuthFormFields from './AuthFormFields';
 import AuthFormActions from './AuthFormActions';
@@ -49,7 +48,7 @@ const AuthForm = ({
   const getTitle = () => {
     if (isPasswordReset) return 'Establecer nueva contraseña';
     if (isForgotPassword) return 'Restablecer contraseña';
-    return isLogin ? 'Bienvenida de vuelta' : 'Crear cuenta';
+    return isLogin ? 'Accede a tu cuenta' : 'Crear cuenta';
   };
 
   const getSubtitle = () => {

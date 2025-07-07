@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -59,7 +58,7 @@ export const useAuthSubmit = () => {
       } else {
         console.log('Login exitoso');
         toast({
-          title: "¡Bienvenida de vuelta!",
+          title: "¡Qué bueno verte de nuevo!",
           description: "Has iniciado sesión correctamente"
         });
         return true;
