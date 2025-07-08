@@ -1,7 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Moment, CreateMomentData } from '@/types/moment';
-import { toast } from '@/hooks/use-toast';
 import { sanitizeTitle, sanitizeNote, validateDate } from '@/utils/inputSanitization';
 import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
 
@@ -19,11 +17,7 @@ export class MomentService {
 
       if (error) {
         logError(error, 'fetch_moments');
-        toast({
-          title: "Error",
-          description: getSecureErrorMessage(error),
-          variant: "destructive",
-        });
+        console.error('Error fetching moments:', getSecureErrorMessage(error));
         return [];
       }
 
@@ -33,6 +27,7 @@ export class MomentService {
       }));
     } catch (error) {
       logError(error, 'fetch_moments_general');
+      console.error('General error fetching moments:', error);
       return [];
     }
   }
@@ -57,26 +52,20 @@ export class MomentService {
   }
 
   static async createMoment(userId: string, momentData: CreateMomentData): Promise<Moment | null> {
+    console.log('🔄 Iniciando creación de momento en el servidor');
+    
     // Sanitize and validate input
     const sanitizedTitle = sanitizeTitle(momentData.title);
-    const sanitizedNote = sanitizeNote(momentData.note || ''); // Allow empty notes
+    const sanitizedNote = sanitizeNote(momentData.note || '');
 
     if (!sanitizedTitle.trim()) {
-      toast({
-        title: "Error de validación",
-        description: "El título es requerido",
-        variant: "destructive",
-      });
-      return null;
+      console.error('❌ Error de validación: título requerido');
+      throw new Error('El título es requerido');
     }
 
     if (!validateDate(momentData.date)) {
-      toast({
-        title: "Error de validación",
-        description: "La fecha no es válida",
-        variant: "destructive",
-      });
-      return null;
+      console.error('❌ Error de validación: fecha inválida');
+      throw new Error('La fecha no es válida');
     }
 
     try {
@@ -95,26 +84,21 @@ export class MomentService {
 
       if (error) {
         logError(error, 'add_moment');
-        toast({
-          title: "Error",
-          description: getSecureErrorMessage(error),
-          variant: "destructive",
-        });
-        return null;
+        console.error('❌ Error creando momento:', getSecureErrorMessage(error));
+        throw new Error(getSecureErrorMessage(error));
       }
 
-      toast({
-        title: "¡Momento guardado!",
-        description: "Tu momento ha sido guardado exitosamente",
-      });
+      console.log('✅ Momento creado exitosamente en la base de datos');
 
+      // NO mostrar toast aquí - se maneja en el hook con optimistic update
       return {
         ...data,
         date: new Date(data.date)
       };
     } catch (error) {
       logError(error, 'add_moment_general');
-      return null;
+      console.error('❌ Error general creando momento:', error);
+      throw error;
     }
   }
 
@@ -128,22 +112,15 @@ export class MomentService {
 
       if (error) {
         logError(error, 'delete_moment');
-        toast({
-          title: "Error",
-          description: getSecureErrorMessage(error),
-          variant: "destructive",
-        });
+        console.error('Error deleting moment:', getSecureErrorMessage(error));
         return false;
       }
 
-      toast({
-        title: "Momento eliminado",
-        description: "Tu momento ha sido eliminado exitosamente",
-      });
-
+      console.log('✅ Momento eliminado exitosamente');
       return true;
     } catch (error) {
       logError(error, 'delete_moment_general');
+      console.error('General error deleting moment:', error);
       return false;
     }
   }
@@ -158,24 +135,15 @@ export class MomentService {
 
       if (error) {
         logError(error, 'toggle_featured_moment');
-        toast({
-          title: "Error",
-          description: getSecureErrorMessage(error),
-          variant: "destructive",
-        });
+        console.error('Error toggling featured moment:', getSecureErrorMessage(error));
         return false;
       }
 
-      toast({
-        title: isFeatured ? "Momento destacado" : "Momento no destacado",
-        description: isFeatured 
-          ? "Tu momento ha sido marcado como destacado" 
-          : "Tu momento ya no está destacado",
-      });
-
+      console.log(`✅ Momento ${isFeatured ? 'destacado' : 'no destacado'} exitosamente`);
       return true;
     } catch (error) {
       logError(error, 'toggle_featured_moment_general');
+      console.error('General error toggling featured moment:', error);
       return false;
     }
   }

@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Camera, Check, X } from 'lucide-react';
+import { Camera, Check, X, Loader2 } from 'lucide-react';
 
 interface AddMomentFormProps {
   onSave: (moment: { title: string; note: string; date: Date; photo?: string }) => void;
   onCancel: () => void;
+  isCreating?: boolean;
 }
 
-const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
+const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormProps) => {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -19,7 +20,8 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (title.trim()) {
+    if (title.trim() && !isCreating) {
+      console.log('📝 Enviando nuevo momento desde el formulario');
       onSave({
         title: title.trim(),
         note: note.trim(),
@@ -59,6 +61,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
               variant="ghost"
               onClick={onCancel}
               className="sm:hidden h-9 w-9 p-0 text-sage-500 touch-manipulation"
+              disabled={isCreating}
             >
               <X className="w-5 h-5" />
             </Button>
@@ -75,6 +78,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 placeholder="Primera sonrisa, primer diente..."
                 className="bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation"
                 required
+                disabled={isCreating}
               />
             </div>
 
@@ -87,6 +91,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className="bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation"
+                disabled={isCreating}
               />
             </div>
 
@@ -100,6 +105,7 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                 placeholder="Describe este momento especial..."
                 className="bg-cream-50 border-sage-200 focus:border-rose-300 resize-none text-base min-h-[100px] sm:min-h-[80px] touch-manipulation"
                 rows={4}
+                disabled={isCreating}
               />
             </div>
 
@@ -114,10 +120,13 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
                   onChange={handlePhotoUpload}
                   className="hidden"
                   id="photo-upload"
+                  disabled={isCreating}
                 />
                 <label
                   htmlFor="photo-upload"
-                  className="flex-1 flex items-center justify-center gap-3 p-4 sm:p-3 border border-sage-200 rounded-lg bg-cream-50 cursor-pointer hover:bg-cream-100 transition-colors touch-manipulation h-12 sm:h-auto"
+                  className={`flex-1 flex items-center justify-center gap-3 p-4 sm:p-3 border border-sage-200 rounded-lg bg-cream-50 ${
+                    !isCreating ? 'cursor-pointer hover:bg-cream-100' : 'opacity-50 cursor-not-allowed'
+                  } transition-colors touch-manipulation h-12 sm:h-auto`}
                 >
                   <Camera className="w-5 h-5 sm:w-4 sm:h-4 text-sage-500" />
                   <span className="text-base sm:text-sm text-sage-600">
@@ -144,16 +153,26 @@ const AddMomentForm = ({ onSave, onCancel }: AddMomentFormProps) => {
               variant="outline"
               onClick={onCancel}
               className="flex-1 border-sage-300 text-sage-600 hover:bg-sage-50 h-12 sm:h-11 text-base hidden sm:flex touch-manipulation"
+              disabled={isCreating}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 sm:h-11 text-base touch-manipulation"
-              disabled={!title.trim()}
+              className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 sm:h-11 text-base touch-manipulation disabled:opacity-50"
+              disabled={!title.trim() || isCreating}
             >
-              <Check className="w-5 h-5 sm:w-4 sm:h-4 mr-2" />
-              Guardar
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-5 h-5 sm:w-4 sm:h-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Check className="w-5 h-5 sm:w-4 sm:h-4 mr-2" />
+                  Guardar
+                </>
+              )}
             </Button>
           </div>
         </form>

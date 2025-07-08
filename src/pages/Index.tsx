@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
@@ -28,6 +27,7 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
 
   const handleAddMoment = async (newMoment: any) => {
+    console.log('🎯 Creando nuevo momento desde Index');
     createMoment(newMoment);
     setShowAddForm(false);
   };
@@ -143,6 +143,7 @@ const Index = () => {
         <AddMomentForm
           onSave={handleAddMoment}
           onCancel={() => setShowAddForm(false)}
+          isCreating={isCreating}
         />
       )}
     </div>

@@ -4,23 +4,29 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MomentService } from '@/services/momentService';
 import { MigrationService } from '@/services/migrationService';
 import { Moment, CreateMomentData } from '@/types/moment';
+import { toast } from '@/hooks/use-toast';
 
 const MOMENTS_QUERY_KEY = 'moments';
 const PAGE_SIZE = 10;
+
+// Flag para evitar migración múltiple
+let migrationCompleted = false;
 
 export const useInfiniteMomentsQuery = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Infinite query para momentos con paginación
+  // Infinite query para momentos con paginación optimizada
   const momentsQuery = useInfiniteQuery({
     queryKey: [MOMENTS_QUERY_KEY, user?.id],
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return { moments: [], hasMore: false };
       
-      // Migrar momentos del localStorage solo en la primera carga
-      if (pageParam === 0) {
+      // Migrar momentos del localStorage solo una vez
+      if (pageParam === 0 && !migrationCompleted) {
+        console.log('Ejecutando migración única de localStorage');
         await MigrationService.migrateMomentsFromLocalStorage(user.id);
+        migrationCompleted = true;
       }
       
       const moments = await MomentService.fetchMoments(user.id, PAGE_SIZE, pageParam);
@@ -36,21 +42,26 @@ export const useInfiniteMomentsQuery = () => {
     },
     initialPageParam: 0,
     enabled: !!user,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    gcTime: 1000 * 60 * 30, // 30 minutos
+    staleTime: 1000 * 60 * 2, // 2 minutos (más frecuente para momentos recientes)
+    gcTime: 1000 * 60 * 15, // 15 minutos (optimizado)
   });
 
-  // Mutation para crear momento con optimistic update
+  // Mutation para crear momento con feedback inmediato
   const createMomentMutation = useMutation({
     mutationFn: async (momentData: CreateMomentData) => {
       if (!user) throw new Error('Usuario no autenticado');
       return MomentService.createMoment(user.id, momentData);
     },
     onMutate: async (newMoment) => {
+      console.log('🚀 Iniciando creación de momento - Feedback inmediato');
+      
+      // Cancelar queries en curso
       await queryClient.cancelQueries({ queryKey: [MOMENTS_QUERY_KEY] });
 
+      // Snapshot del estado anterior
       const previousData = queryClient.getQueryData([MOMENTS_QUERY_KEY, user?.id]);
 
+      // Crear momento temporal para optimistic update
       const tempMoment: Moment = {
         id: `temp-${Date.now()}`,
         ...newMoment,
@@ -71,14 +82,32 @@ export const useInfiniteMomentsQuery = () => {
         return { ...old, pages: newPages };
       });
 
+      // 🎉 Toast de éxito inmediato con optimistic update
+      toast({
+        title: "¡Momento guardado!",
+        description: "Tu momento se está sincronizando...",
+      });
+
       return { previousData };
     },
     onError: (err, newMoment, context) => {
+      console.error('❌ Error al crear momento:', err);
+      
+      // Revertir optimistic update
       if (context?.previousData) {
         queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id], context.previousData);
       }
+      
+      // Toast de error
+      toast({
+        title: "Error al guardar",
+        description: "Hubo un problema al guardar tu momento. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     },
     onSuccess: (newMoment) => {
+      console.log('✅ Momento creado exitosamente en el servidor');
+      
       if (newMoment) {
         // Actualizar con el momento real del servidor
         queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id], (old: any) => {
@@ -87,10 +116,19 @@ export const useInfiniteMomentsQuery = () => {
           const newPages = [...old.pages];
           newPages[0] = {
             ...newPages[0],
-            moments: [newMoment, ...newPages[0].moments.filter((m: Moment) => !m.id.startsWith('temp-'))],
+            moments: [
+              newMoment, 
+              ...newPages[0].moments.filter((m: Moment) => !m.id.startsWith('temp-'))
+            ],
           };
           
           return { ...old, pages: newPages };
+        });
+
+        // Toast de confirmación final (opcional, más sutil)
+        toast({
+          title: "Sincronizado",
+          description: "Tu momento se ha guardado correctamente",
         });
       }
     },
