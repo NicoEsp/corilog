@@ -53,7 +53,7 @@ const MomentCard = memo(({
       <div onClick={onClick} className={`bg-card paper-texture rounded-xl p-4 sm:p-6 transition-all duration-300 cursor-pointer active:scale-[0.98] border group relative touch-manipulation ${moment.is_featured ? 'featured-shimmer featured-glow hover:featured-glow-intense border-amber-400/80 bg-gradient-to-br from-amber-50/50 via-yellow-50/30 to-amber-50/20 sm:hover:scale-[1.03]' : 'gentle-shadow hover:shadow-lg border-sage-200/30 sm:hover:scale-[1.02]'}`}>
         {/* Indicador de destacado mejorado */}
         {moment.is_featured && (
-          <div className="absolute top-2 right-2 w-6 h-6 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center featured-star shadow-lg z-20">
+          <div className="absolute top-2 left-2 w-6 h-6 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center featured-star shadow-lg z-20">
             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
