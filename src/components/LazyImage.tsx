@@ -67,12 +67,14 @@ const LazyImage = ({ src, alt, className = '', placeholder }: LazyImageProps) =>
           ref={imgRef}
           src={src}
           alt={alt}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
+          className={`w-full h-full object-cover transition-opacity duration-300 select-none ${
             loadState === 'loaded' ? 'opacity-100' : 'opacity-0'
           }`}
           onLoad={handleLoad}
           onError={handleError}
           loading="lazy"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
         />
       )}
     </div>

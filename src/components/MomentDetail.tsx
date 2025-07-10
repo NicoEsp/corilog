@@ -120,7 +120,9 @@ const MomentDetail = ({ moment, onBack, onDelete, onToggleFeatured }: MomentDeta
                     <img 
                       src={moment.photo} 
                       alt={moment.title}
-                      className="w-full h-auto max-h-64 sm:max-h-96 object-cover"
+                      className="w-full h-auto max-h-64 sm:max-h-96 object-cover select-none"
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
                     />
                   </div>
                 </div>
