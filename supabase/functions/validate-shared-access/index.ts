@@ -30,88 +30,53 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get shared moment data
-    const { data: sharedMoment, error: sharedError } = await supabase
-      .from('shared_moments')
-      .select('*')
-      .eq('share_token', shareToken)
-      .eq('is_active', true)
-      .single();
+    // Obtener información del request para logging de seguridad
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
 
-    if (sharedError || !sharedMoment) {
-      console.log('Shared moment not found or inactive:', sharedError);
+    // Usar la nueva función de seguridad definer para validación
+    const { data: validationResult, error: validationError } = await supabase
+      .rpc('validate_shared_moment_access', {
+        p_share_token: shareToken,
+        p_email: email
+      });
+
+    // Log del intento de acceso (sin esperar el resultado)
+    supabase.rpc('log_shared_access_attempt', {
+      p_share_token: shareToken,
+      p_email: email,
+      p_ip_address: clientIP,
+      p_user_agent: userAgent,
+      p_success: !validationError && validationResult && validationResult.length > 0 && validationResult[0]?.access_valid
+    }).catch(err => console.error('Error logging access attempt:', err));
+
+    if (validationError) {
+      console.error('Error en validación:', validationError);
       return new Response(JSON.stringify({ 
         isValid: false, 
-        error: 'Enlace no válido o expirado' 
+        error: 'Error interno del servidor' 
       }), {
-        status: 404,
+        status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Check if expired
-    if (sharedMoment.expires_at && new Date(sharedMoment.expires_at) < new Date()) {
-      console.log('Shared moment expired');
+    // Verificar si el acceso es válido
+    if (!validationResult || validationResult.length === 0 || !validationResult[0]?.access_valid) {
+      console.log('Access denied - invalid token, expired, or unauthorized email');
       return new Response(JSON.stringify({ 
         isValid: false, 
-        error: 'Este enlace ha expirado' 
-      }), {
-        status: 410,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    // Check if email is authorized
-    const emailLower = email.toLowerCase().trim();
-    const isAuthorized = sharedMoment.recipient_email_1 === emailLower || 
-                        sharedMoment.recipient_email_2 === emailLower;
-
-    if (!isAuthorized) {
-      console.log('Email not authorized:', emailLower);
-      return new Response(JSON.stringify({ 
-        isValid: false, 
-        error: 'No tienes autorización para ver este momento' 
+        error: 'Enlace inválido, expirado, o email no autorizado' 
       }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Get the actual moment data
-    const { data: moment, error: momentError } = await supabase
-      .from('moments')
-      .select('id, title, note, date, photo')
-      .eq('id', sharedMoment.moment_id)
-      .single();
-
-    if (momentError || !moment) {
-      console.log('Moment not found:', momentError);
-      return new Response(JSON.stringify({ 
-        isValid: false, 
-        error: 'Momento no encontrado' 
-      }), {
-        status: 404,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    // Get shared by user info
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('display_name, email')
-      .eq('id', sharedMoment.shared_by_user_id)
-      .single();
-
+    const result = validationResult[0];
+    const moment = result.moment_data;
+    const profile = result.shared_by_data;
     const sharedByName = profile?.display_name || profile?.email || 'Alguien especial';
-
-    // Update view count
-    const viewCountField = sharedMoment.recipient_email_1 === emailLower ? 
-      'view_count_email_1' : 'view_count_email_2';
-    
-    await supabase
-      .from('shared_moments')
-      .update({ [viewCountField]: sharedMoment[viewCountField] + 1 })
-      .eq('id', sharedMoment.id);
 
     console.log('Successfully validated shared access');
 

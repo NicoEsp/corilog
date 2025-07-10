@@ -189,6 +189,24 @@ export type Database = {
         Args: { required_role: string; user_id?: string }
         Returns: boolean
       }
+      log_shared_access_attempt: {
+        Args: {
+          p_share_token: string
+          p_email: string
+          p_ip_address: unknown
+          p_user_agent: string
+          p_success: boolean
+        }
+        Returns: undefined
+      }
+      validate_shared_moment_access: {
+        Args: { p_share_token: string; p_email: string }
+        Returns: {
+          moment_data: Json
+          shared_by_data: Json
+          access_valid: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
