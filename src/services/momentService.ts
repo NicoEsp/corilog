@@ -1,10 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Moment, CreateMomentData } from '@/types/moment';
 import { sanitizeTitle, sanitizeNote, validateDate } from '@/utils/inputSanitization';
-import { getSecureErrorMessage, logError } from '@/utils/errorHandling';
+import { getSecureErrorMessage } from '@/utils/errorHandling';
+import { logger } from '@/utils/logger';
+import { APP_CONFIG } from '@/config/constants';
 
 export class MomentService {
-  static async fetchMoments(userId: string, limit: number = 20, offset: number = 0): Promise<Moment[]> {
+  static async fetchMoments(userId: string, limit: number = APP_CONFIG.MOMENTS_PER_PAGE, offset: number = 0): Promise<Moment[]> {
     try {
       // Query optimizada usando el índice (is_featured DESC, date DESC)
       const { data, error } = await supabase
@@ -16,8 +18,7 @@ export class MomentService {
         .range(offset, offset + limit - 1);
 
       if (error) {
-        logError(error, 'fetch_moments');
-        console.error('Error fetching moments:', getSecureErrorMessage(error));
+        logger.error('Error fetching moments', 'fetch_moments', error);
         return [];
       }
 
@@ -26,8 +27,7 @@ export class MomentService {
         date: new Date(moment.date)
       }));
     } catch (error) {
-      logError(error, 'fetch_moments_general');
-      console.error('General error fetching moments:', error);
+      logger.error('General error fetching moments', 'fetch_moments_general', error);
       return [];
     }
   }
@@ -40,31 +40,31 @@ export class MomentService {
         .eq('user_id', userId);
 
       if (error) {
-        logError(error, 'fetch_moments_count');
+        logger.error('Error fetching moments count', 'fetch_moments_count', error);
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      logError(error, 'fetch_moments_count_general');
+      logger.error('General error fetching moments count', 'fetch_moments_count_general', error);
       return 0;
     }
   }
 
   static async createMoment(userId: string, momentData: CreateMomentData): Promise<Moment | null> {
-    console.log('🔄 Iniciando creación de momento en el servidor');
+    logger.info('Starting moment creation', 'createMoment');
     
     // Sanitize and validate input
     const sanitizedTitle = sanitizeTitle(momentData.title);
     const sanitizedNote = sanitizeNote(momentData.note || '');
 
     if (!sanitizedTitle.trim()) {
-      console.error('❌ Error de validación: título requerido');
+      logger.error('Validation error: title required', 'createMoment');
       throw new Error('El título es requerido');
     }
 
     if (!validateDate(momentData.date)) {
-      console.error('❌ Error de validación: fecha inválida');
+      logger.error('Validation error: invalid date', 'createMoment');
       throw new Error('La fecha no es válida');
     }
 
@@ -83,12 +83,11 @@ export class MomentService {
         .single();
 
       if (error) {
-        logError(error, 'add_moment');
-        console.error('❌ Error creando momento:', getSecureErrorMessage(error));
+        logger.error('Error creating moment', 'add_moment', error);
         throw new Error(getSecureErrorMessage(error));
       }
 
-      console.log('✅ Momento creado exitosamente en la base de datos');
+      logger.info('Moment created successfully', 'add_moment');
 
       // NO mostrar toast aquí - se maneja en el hook con optimistic update
       return {
@@ -96,8 +95,7 @@ export class MomentService {
         date: new Date(data.date)
       };
     } catch (error) {
-      logError(error, 'add_moment_general');
-      console.error('❌ Error general creando momento:', error);
+      logger.error('General error creating moment', 'add_moment_general', error);
       throw error;
     }
   }
@@ -111,16 +109,14 @@ export class MomentService {
         .eq('user_id', userId);
 
       if (error) {
-        logError(error, 'delete_moment');
-        console.error('Error deleting moment:', getSecureErrorMessage(error));
+        logger.error('Error deleting moment', 'delete_moment', error);
         return false;
       }
 
-      console.log('✅ Momento eliminado exitosamente');
+      logger.info('Moment deleted successfully', 'delete_moment');
       return true;
     } catch (error) {
-      logError(error, 'delete_moment_general');
-      console.error('General error deleting moment:', error);
+      logger.error('General error deleting moment', 'delete_moment_general', error);
       return false;
     }
   }
@@ -134,16 +130,14 @@ export class MomentService {
         .eq('user_id', userId);
 
       if (error) {
-        logError(error, 'toggle_featured_moment');
-        console.error('Error toggling featured moment:', getSecureErrorMessage(error));
+        logger.error('Error toggling featured moment', 'toggle_featured_moment', error);
         return false;
       }
 
-      console.log(`✅ Momento ${isFeatured ? 'destacado' : 'no destacado'} exitosamente`);
+      logger.info(`Moment ${isFeatured ? 'featured' : 'unfeatured'} successfully`, 'toggle_featured_moment');
       return true;
     } catch (error) {
-      logError(error, 'toggle_featured_moment_general');
-      console.error('General error toggling featured moment:', error);
+      logger.error('General error toggling featured moment', 'toggle_featured_moment_general', error);
       return false;
     }
   }

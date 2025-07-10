@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { logError } from '@/utils/errorHandling';
+import { logger } from '@/utils/logger';
+import { ROUTES } from '@/config/constants';
 
 interface AuthContextType {
   user: User | null;
@@ -45,9 +46,9 @@ const cleanupAuthState = (() => {
             }
           });
         }
-      } catch (error) {
-        logError(error, 'cleanup_auth_state');
-      }
+        } catch (error) {
+          logger.error('Error during auth cleanup', 'cleanup_auth_state', error);
+        }
     };
     
     cleanupFn();
@@ -69,18 +70,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
-        logError(error, 'sign_out');
-        console.error('Error signing out:', error);
+        logger.error('Error signing out', 'sign_out', error);
       }
       
       // Force page reload for clean state
-      window.location.href = '/auth';
+      window.location.href = ROUTES.AUTH;
     } catch (error) {
-      logError(error, 'sign_out_general');
+      logger.error('General error during sign out', 'sign_out_general', error);
       
       // Force cleanup and redirect even if signOut fails
       cleanupAuthState();
-      window.location.href = '/auth';
+      window.location.href = ROUTES.AUTH;
     }
   }, []);
 
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         if (!mounted) return;
 
-        console.log('Auth state change:', event);
+        logger.info('Auth state change', 'AuthContext', { event });
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -102,9 +102,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === 'SIGNED_OUT') {
           cleanupAuthState();
         } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
+          logger.info('Token refreshed successfully', 'AuthContext');
         } else if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in:', session.user.email);
+          logger.info('User signed in', 'AuthContext', { email: session.user.email });
         }
       }
     );
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          logError(error, 'get_session');
+          logger.error('Error getting session', 'get_session', error);
         }
         
         if (mounted) {
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
         }
       } catch (error) {
-        logError(error, 'check_session');
+        logger.error('Error checking session', 'check_session', error);
         if (mounted) {
           setLoading(false);
         }

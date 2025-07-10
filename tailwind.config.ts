@@ -143,13 +143,22 @@ export default {
 					'50%': {
 						transform: 'translateY(-4px)'
 					}
+				},
+				'shimmer': {
+					'0%': {
+						'background-position': '-200px 0'
+					},
+					'100%': {
+						'background-position': 'calc(200px + 100%) 0'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.5s ease-out',
-				'gentle-bounce': 'gentle-bounce 2s ease-in-out infinite'
+				'gentle-bounce': 'gentle-bounce 2s ease-in-out infinite',
+				'shimmer': 'shimmer 2s linear infinite'
 			}
 		}
 	},

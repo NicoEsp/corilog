@@ -1,13 +1,14 @@
 
 import { QueryClient } from '@tanstack/react-query';
+import { APP_CONFIG } from '@/config/constants';
 
 // Configuración optimizada del QueryClient
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Cache más agresivo para datos que no cambian frecuentemente
-      staleTime: 1000 * 60 * 5, // 5 minutos
-      gcTime: 1000 * 60 * 30, // 30 minutos (antes cacheTime)
+      staleTime: APP_CONFIG.QUERY_STALE_TIME,
+      gcTime: APP_CONFIG.QUERY_GC_TIME,
       // Retry con backoff exponencial
       retry: (failureCount, error) => {
         if (failureCount < 2) return true;

@@ -1,7 +1,6 @@
-import React, { useState, memo } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useState, memo, useMemo, useCallback } from 'react';
 import { Image, Trash2, Share } from 'lucide-react';
+import { formatDate } from '@/utils/dateUtils';
 import { Button } from '@/components/ui/button';
 import DeleteMomentDialog from './DeleteMomentDialog';
 import ShareMomentModal from './ShareMomentModal';
@@ -29,28 +28,38 @@ const MomentCard = memo(({
 }: MomentCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const handleDeleteClick = (e: React.MouseEvent) => {
+  // Memoizar callbacks para evitar re-renders
+  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteDialog(true);
-  };
-  const handleShareClick = (e: React.MouseEvent) => {
+  }, []);
+
+  const handleShareClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setShowShareModal(true);
-  };
-  const handleToggleFeatured = () => {
+  }, []);
+
+  const handleToggleFeatured = useCallback(() => {
     onToggleFeatured(moment.id, !moment.is_featured);
-  };
-  const handleConfirmDelete = () => {
+  }, [onToggleFeatured, moment.id, moment.is_featured]);
+
+  const handleConfirmDelete = useCallback(() => {
     onDelete(moment.id);
     setShowDeleteDialog(false);
-  };
+  }, [onDelete, moment.id]);
 
-  // Memoizar el formato de fecha
-  const formattedDate = React.useMemo(() => format(moment.date, "d 'de' MMMM, yyyy", {
-    locale: es
-  }), [moment.date]);
+  // Memoizar datos computados
+  const formattedDate = useMemo(() => formatDate(moment.date, 'DISPLAY'), [moment.date]);
+  
+  const cardClassName = useMemo(() => {
+    const baseClasses = "bg-card paper-texture rounded-xl p-4 sm:p-6 transition-all duration-300 cursor-pointer active:scale-[0.98] border group relative touch-manipulation";
+    const featuredClasses = "featured-shimmer featured-glow hover:featured-glow-intense border-amber-400/80 bg-gradient-to-br from-amber-50/50 via-yellow-50/30 to-amber-50/20 sm:hover:scale-[1.03]";
+    const normalClasses = "gentle-shadow hover:shadow-lg border-sage-200/30 sm:hover:scale-[1.02]";
+    
+    return `${baseClasses} ${moment.is_featured ? featuredClasses : normalClasses}`;
+  }, [moment.is_featured]);
   return <>
-      <div onClick={onClick} className={`bg-card paper-texture rounded-xl p-4 sm:p-6 transition-all duration-300 cursor-pointer active:scale-[0.98] border group relative touch-manipulation ${moment.is_featured ? 'featured-shimmer featured-glow hover:featured-glow-intense border-amber-400/80 bg-gradient-to-br from-amber-50/50 via-yellow-50/30 to-amber-50/20 sm:hover:scale-[1.03]' : 'gentle-shadow hover:shadow-lg border-sage-200/30 sm:hover:scale-[1.02]'}`}>
+      <div onClick={onClick} className={cardClassName}>
         {/* Indicador de destacado mejorado */}
         {moment.is_featured && (
           <div className="absolute top-2 left-2 w-6 h-6 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center featured-star shadow-lg z-20">
