@@ -8,6 +8,7 @@ import LoadMoreMoments from '@/components/LoadMoreMoments';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import MomentsHeader from '@/components/MomentsHeader';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { 
@@ -21,6 +22,8 @@ const Index = () => {
     toggleFeatured,
     isCreating 
   } = useInfiniteMomentsQuery();
+  
+  const { toast } = useToast();
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
@@ -47,7 +50,16 @@ const Index = () => {
   };
 
   const handlePremiumFeatureClick = (featureName: string) => {
-    alert(`"${featureName}" es una función premium que estará disponible próximamente.`);
+    const premiumMessages: Record<string, string> = {
+      'Carta al Futuro': '"Carta al Futuro" es una función premium que estará disponible próximamente.',
+      'Exportar a E-book': '"Exportar a E-book" es una función premium que estará disponible próximamente.'
+    };
+
+    toast({
+      title: "Función Premium",
+      description: premiumMessages[featureName] || `"${featureName}" es una función premium que estará disponible próximamente.`,
+      variant: "default"
+    });
   };
 
   if (isLoading) {

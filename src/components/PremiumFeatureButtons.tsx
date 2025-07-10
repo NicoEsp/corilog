@@ -19,13 +19,13 @@ const PremiumFeatureButtons = ({ onPremiumFeatureClick }: PremiumFeatureButtonsP
     );
   }
 
-  const handleFeatureClick = (featureName: string) => {
-    if (canAccessFeature('future-letter') || canAccessFeature('ebook')) {
+  const handleFeatureClick = (featureName: string, feature: 'future-letter' | 'ebook') => {
+    if (canAccessFeature(feature)) {
       // Usuario premium o superadmin - funcionalidad habilitada
       onPremiumFeatureClick(featureName);
     } else {
-      // Usuario free - mostrar mensaje de upgrade
-      onPremiumFeatureClick(`Actualiza a Premium para acceder a "${featureName}"`);
+      // Usuario free - mostrar mensaje específico del feature
+      onPremiumFeatureClick(featureName);
     }
   };
 
@@ -34,7 +34,7 @@ const PremiumFeatureButtons = ({ onPremiumFeatureClick }: PremiumFeatureButtonsP
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleFeatureClick('Carta al Futuro')}
+        onClick={() => handleFeatureClick('Carta al Futuro', 'future-letter')}
         className={
           canAccessFeature('future-letter')
             ? "border-sage-300 text-sage-700 hover:bg-sage-50"
@@ -51,7 +51,7 @@ const PremiumFeatureButtons = ({ onPremiumFeatureClick }: PremiumFeatureButtonsP
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleFeatureClick('Exportar a E-book')}
+        onClick={() => handleFeatureClick('Exportar a E-book', 'ebook')}
         className={
           canAccessFeature('ebook')
             ? "border-sage-300 text-sage-700 hover:bg-sage-50"
