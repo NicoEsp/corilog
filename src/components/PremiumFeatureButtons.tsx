@@ -38,9 +38,8 @@ const PremiumFeatureButtons = ({ onPremiumFeatureClick }: PremiumFeatureButtonsP
         className={
           canAccessFeature('future-letter')
             ? "border-sage-300 text-sage-700 hover:bg-sage-50"
-            : "border-sage-200 text-sage-400 bg-sage-50 cursor-not-allowed opacity-60"
+            : "border-sage-200 text-sage-400 bg-sage-50 cursor-pointer opacity-60"
         }
-        disabled={!canAccessFeature('future-letter')}
       >
         {!canAccessFeature('future-letter') && <Lock className="w-3 h-3 mr-1" />}
         {role === 'superadmin' && <Crown className="w-3 h-3 mr-1" />}
@@ -55,9 +54,8 @@ const PremiumFeatureButtons = ({ onPremiumFeatureClick }: PremiumFeatureButtonsP
         className={
           canAccessFeature('ebook')
             ? "border-sage-300 text-sage-700 hover:bg-sage-50"
-            : "border-sage-200 text-sage-400 bg-sage-50 cursor-not-allowed opacity-60"
+            : "border-sage-200 text-sage-400 bg-sage-50 cursor-pointer opacity-60"
         }
-        disabled={!canAccessFeature('ebook')}
       >
         {!canAccessFeature('ebook') && <Lock className="w-3 h-3 mr-1" />}
         {role === 'superadmin' && <Crown className="w-3 h-3 mr-1" />}
