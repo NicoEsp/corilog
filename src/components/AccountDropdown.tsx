@@ -57,15 +57,6 @@ const AccountDropdown = () => {
             <p className="text-xs text-sage-500">{formattedDate}</p>
           </div>
         </DropdownMenuItem>
-        
-        {/* Placeholder for invitation info - would be populated from database */}
-        <DropdownMenuItem className="flex items-center gap-2 p-3 cursor-default opacity-50">
-          <User className="w-4 h-4 text-sage-500" />
-          <div>
-            <p className="text-sm font-medium text-sage-800">Invitado por</p>
-            <p className="text-xs text-sage-500">No disponible</p>
-          </div>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
