@@ -133,4 +133,80 @@
     -webkit-line-clamp: 2;
     overflow: hidden;
   }
+
+  /* ============================================
+     EFECTOS PARA MOMENTOS DESTACADOS
+     ============================================ */
+
+  .featured-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .featured-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(245, 158, 11, 0.1),
+      transparent
+    );
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+  }
+
+  .featured-glow {
+    box-shadow: 
+      0 0 20px rgba(245, 158, 11, 0.15),
+      0 4px 16px rgba(245, 158, 11, 0.1),
+      0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .featured-glow-intense {
+    box-shadow: 
+      0 0 30px rgba(245, 158, 11, 0.25),
+      0 8px 24px rgba(245, 158, 11, 0.15),
+      0 4px 8px rgba(245, 158, 11, 0.1);
+  }
+
+  .featured-star {
+    animation: featured-bounce 2s ease-in-out infinite;
+  }
+
+  .featured-timeline-point {
+    animation: golden-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  @keyframes featured-bounce {
+    0%, 100% { 
+      transform: scale(1) rotate(0deg);
+    }
+    25% { 
+      transform: scale(1.1) rotate(-5deg);
+    }
+    75% { 
+      transform: scale(1.05) rotate(5deg);
+    }
+  }
+
+  @keyframes golden-pulse {
+    0%, 100% { 
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+    }
+    50% { 
+      transform: scale(1.2);
+      box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    }
+  }
 }
