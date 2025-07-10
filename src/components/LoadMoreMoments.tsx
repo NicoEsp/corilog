@@ -32,6 +32,7 @@ const LoadMoreMoments = ({
   if (!hasNextPage && !isLoadingMore) {
     return <div className="text-center py-8">
         <p className="text-sage-500 handwritten text-sm">✨ Has llegado al final de tus Momentos ✨ 
+
 Puedes registrar más desde "Nuevo momento" en la barra superior</p>
       </div>;
   }
