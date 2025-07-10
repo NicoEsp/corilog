@@ -1,0 +1,26 @@
+{
+  "name": "Corilog - Tu diario íntimo digital",
+  "short_name": "Corilog",
+  "description": "Registra y atesora momentos significativos para vos y compartelos con tu familia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/lovable-uploads/d19ae3b8-1531-4958-b46f-344618e7a49b.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/lovable-uploads/406260e3-8e10-4b37-a296-2fe1c3a0c976.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/lovable-uploads/9f7f3e7a-1038-4929-b8cf-597ee054aaaf.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
