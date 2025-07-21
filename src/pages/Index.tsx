@@ -1,4 +1,6 @@
+
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
@@ -11,6 +13,7 @@ import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const navigate = useNavigate();
   const { 
     moments, 
     isLoading, 
@@ -47,6 +50,10 @@ const Index = () => {
     if (hasNextPage && !isLoadingMore) {
       fetchNextPage();
     }
+  };
+
+  const handleNavigateToAuth = (isLogin: boolean) => {
+    navigate('/auth', { state: { isLogin } });
   };
 
   const handlePremiumFeatureClick = (featureName: string) => {
@@ -96,6 +103,7 @@ const Index = () => {
           <WelcomeScreen 
             onAddMoment={() => setShowAddForm(true)}
             isCreating={isCreating}
+            onNavigateToAuth={handleNavigateToAuth}
           />
         ) : (
           <div className="max-w-4xl mx-auto">

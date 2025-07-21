@@ -1,16 +1,24 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Camera, BookOpen, Share, Calendar, Star, Image } from 'lucide-react';
+import { Camera, BookOpen, Share, Calendar, Star, Image, UserPlus, LogIn } from 'lucide-react';
+import { Toggle } from '@/components/ui/toggle';
+
 interface WelcomeScreenProps {
   onAddMoment: () => void;
   isCreating: boolean;
+  onNavigateToAuth?: (isLogin: boolean) => void;
 }
+
 const WelcomeScreen = ({
   onAddMoment,
-  isCreating
+  isCreating,
+  onNavigateToAuth
 }: WelcomeScreenProps) => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [isLoginMode, setIsLoginMode] = useState(false);
+
   const features = [{
     icon: Camera,
     title: "Captura momentos",
@@ -32,6 +40,29 @@ const WelcomeScreen = ({
     description: "Envía momentos especiales a tus seres queridos de forma privada",
     color: "text-green-600"
   }];
+
+  const handleAuthAction = () => {
+    if (onNavigateToAuth) {
+      onNavigateToAuth(isLoginMode);
+    }
+  };
+
+  const getAuthText = () => {
+    return isLoginMode ? {
+      title: "Continuá tu historia",
+      description: "Accede a tus momentos especiales guardados",
+      buttonText: "Iniciar sesión",
+      icon: LogIn
+    } : {
+      title: "Empezá tu diario digital",
+      description: "Crea tu cuenta y comenzá a atesorar momentos únicos",
+      buttonText: "Crear cuenta",
+      icon: UserPlus
+    };
+  };
+
+  const authContent = getAuthText();
+
   return <div className="text-center py-8 sm:py-12 max-w-4xl mx-auto">
       {/* Hero Section */}
       <div className="mb-8 sm:mb-12">
@@ -42,13 +73,54 @@ const WelcomeScreen = ({
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif-elegant text-sage-800 mb-4 px-4">
           Bienvenido a Corilog
         </h1>
+
+        {/* Auth Mode Toggle */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <span className={`text-sm font-medium transition-colors ${!isLoginMode ? 'text-sage-800' : 'text-sage-500'}`}>
+            Registrarse
+          </span>
+          <Toggle
+            pressed={isLoginMode}
+            onPressedChange={setIsLoginMode}
+            className="data-[state=on]:bg-sage-600 data-[state=on]:text-white border-sage-300"
+            aria-label="Cambiar entre registro e inicio de sesión"
+          />
+          <span className={`text-sm font-medium transition-colors ${isLoginMode ? 'text-sage-800' : 'text-sage-500'}`}>
+            Iniciar sesión
+          </span>
+        </div>
         
-        <p className="text-sage-600 mb-8 max-w-2xl mx-auto leading-relaxed px-4 text-base sm:text-lg font-medium">Tu diario privado digital para atesorar momentos únicos. Captura, organiza y revive tus momentos más preciados.</p>
+        <h2 className="text-xl sm:text-2xl font-serif-elegant text-sage-700 mb-3 px-4">
+          {authContent.title}
+        </h2>
         
-        <Button onClick={onAddMoment} disabled={isCreating} className="bg-rose-600 hover:bg-rose-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 h-12 px-8 text-base touch-manipulation mb-8 sm:mb-12" size="lg">
-          <Camera className="w-5 h-5 mr-2" />
-          {isCreating ? 'Creando...' : 'Crear mi primer momento'}
-        </Button>
+        <p className="text-sage-600 mb-8 max-w-2xl mx-auto leading-relaxed px-4 text-base sm:text-lg font-medium">
+          {authContent.description}
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
+          <Button 
+            onClick={handleAuthAction} 
+            className="bg-rose-600 hover:bg-rose-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 h-12 px-8 text-base touch-manipulation" 
+            size="lg"
+          >
+            <authContent.icon className="w-5 h-5 mr-2" />
+            {authContent.buttonText}
+          </Button>
+          
+          <div className="flex items-center gap-2 text-sage-500 text-sm">
+            <span>o</span>
+            <Button 
+              onClick={onAddMoment} 
+              disabled={isCreating} 
+              variant="outline" 
+              className="border-sage-300 text-sage-700 hover:bg-sage-100 h-10 px-6"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              {isCreating ? 'Creando...' : 'Explorar sin cuenta'}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Features Grid */}
@@ -79,12 +151,17 @@ const WelcomeScreen = ({
             <Image className="w-6 h-6 text-sage-500 mr-2" />
             <span className="text-sage-600 font-medium">¿Empezamos?</span>
           </div>
-          <p className="text-sage-500 text-sm sm:text-base mb-4">Cada momento cuenta una historia. Empeza la tuya hoy.</p>
-          <Button onClick={onAddMoment} disabled={isCreating} variant="outline" className="border-sage-300 text-sage-700 hover:bg-sage-100 h-10 px-6">
-            {isCreating ? 'Creando momento...' : 'Empezar ahora'}
+          <p className="text-sage-500 text-sm sm:text-base mb-4">Cada momento cuenta una historia. {isLoginMode ? 'Continuá la tuya.' : 'Empezá la tuya hoy.'}</p>
+          <Button 
+            onClick={handleAuthAction} 
+            variant="outline" 
+            className="border-sage-300 text-sage-700 hover:bg-sage-100 h-10 px-6"
+          >
+            {authContent.buttonText}
           </Button>
         </div>
       </div>
     </div>;
 };
+
 export default WelcomeScreen;

@@ -1,6 +1,5 @@
-
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmailConfirmation } from '@/hooks/useEmailConfirmation';
@@ -12,6 +11,7 @@ import AuthForm from '@/components/auth/AuthForm';
 
 const Auth = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [isLogin, setIsLogin] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,6 +35,13 @@ const Auth = () => {
   const { isSubmitting, submitAuth } = useAuthSubmit();
   const { isSubmitting: isSubmittingReset, sendPasswordReset } = useForgotPassword();
   const { isSubmitting: isSubmittingPasswordReset, resetPassword } = usePasswordReset();
+
+  // Set initial login state from navigation
+  useEffect(() => {
+    if (location.state?.isLogin !== undefined) {
+      setIsLogin(location.state.isLogin);
+    }
+  }, [location.state]);
 
   // Redirigir si ya está autenticado (pero no si está en modo reset de contraseña)
   if (!loading && user && !isPasswordReset) {
