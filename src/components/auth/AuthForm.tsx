@@ -1,6 +1,8 @@
+
 import { Card } from '@/components/ui/card';
 import AuthFormFields from './AuthFormFields';
 import AuthFormActions from './AuthFormActions';
+import GoogleAuthButton from './GoogleAuthButton';
 
 interface AuthFormProps {
   isLogin: boolean;
@@ -57,6 +59,9 @@ const AuthForm = ({
     return isLogin ? 'Accede a tus momentos especiales' : 'Comienza a guardar tus recuerdos';
   };
 
+  // Solo mostrar Google Auth en login y signup (no en forgot password o reset)
+  const showGoogleAuth = !isForgotPassword && !isPasswordReset;
+
   return (
     <Card className="bg-card paper-texture gentle-shadow border-sage-200/50">
       <form onSubmit={onSubmit} className="p-6 space-y-6">
@@ -68,6 +73,23 @@ const AuthForm = ({
             {getSubtitle()}
           </p>
         </div>
+
+        {showGoogleAuth && (
+          <>
+            <GoogleAuthButton />
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-sage-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-sage-500 font-medium">
+                  O continúa con email
+                </span>
+              </div>
+            </div>
+          </>
+        )}
 
         <AuthFormFields
           isLogin={isLogin}

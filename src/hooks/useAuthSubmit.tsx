@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -90,7 +91,7 @@ export const useAuthSubmit = () => {
         email: email.trim().toLowerCase(),
         password,
         options: {
-          emailRedirectTo: 'https://corilog.lovable.app'
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
