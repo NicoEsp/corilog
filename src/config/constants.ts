@@ -1,3 +1,4 @@
+
 // Configuración centralizada de la aplicación
 export const APP_CONFIG = {
   // Paginación
@@ -33,6 +34,14 @@ export const APP_CONFIG = {
     lg: 1024,
     xl: 1280,
   },
+
+  // Google Picker configuration
+  GOOGLE_PICKER: {
+    CLIENT_ID: '', // Usuario debe configurar esto
+    SCOPE: 'https://www.googleapis.com/auth/drive.readonly',
+    DISCOVERY_DOC: 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+    API_KEY: '', // Usuario debe configurar esto si es necesario
+  },
 } as const;
 
 // URLs y rutas
@@ -52,12 +61,16 @@ export const MESSAGES = {
     VALIDATION: 'Los datos ingresados no son válidos.',
     FILE_SIZE: `El archivo no puede superar los ${APP_CONFIG.MAX_FILE_SIZE / (1024 * 1024)}MB`,
     FILE_TYPE: 'Solo se permiten imágenes JPG, PNG o WebP',
+    GOOGLE_PICKER_LOAD: 'No se pudo cargar Google Picker. Intenta nuevamente.',
+    GOOGLE_PICKER_AUTH: 'Error de autenticación con Google. Verifica los permisos.',
+    GOOGLE_PHOTO_DOWNLOAD: 'Error al descargar la foto desde Google.',
   },
   SUCCESS: {
     MOMENT_CREATED: 'Momento guardado exitosamente',
     MOMENT_DELETED: 'Momento eliminado',
     MOMENT_FEATURED: 'Momento destacado',
     MOMENT_UNFEATURED: 'Momento no destacado',
+    GOOGLE_PHOTO_SELECTED: 'Foto seleccionada desde Google',
   },
 } as const;
 
