@@ -25,42 +25,24 @@ export const useAuth = () => {
 };
 
 // Clean up auth state utility - menos agresivo
-const cleanupAuthState = (() => {
-  let cleanupFn: (() => void) | null = null;
-  
-  return (manual = false) => {
-    if (cleanupFn) return cleanupFn(manual);
-    
-    cleanupFn = (isManual = false) => {
-      try {
-        if (isManual) {
-          // Solo en logout manual, limpieza completa
-          Object.keys(localStorage).forEach((key) => {
-            if (key.startsWith('supabase.auth.') || key.includes('sb-') || key === 'corilog-auth') {
-              localStorage.removeItem(key);
-            }
-          });
-          
-          if (typeof sessionStorage !== 'undefined') {
-            Object.keys(sessionStorage).forEach((key) => {
-              if (key.startsWith('supabase.auth.') || key.includes('sb-') || key === 'corilog-auth') {
-                sessionStorage.removeItem(key);
-              }
-            });
-          }
-          logger.info('Manual auth cleanup completed', 'AuthContext');
-        } else {
-          // En errores automáticos, solo limpiar tokens inválidos pero preservar sesión
-          logger.info('Preserving session during automatic cleanup', 'AuthContext');
+const cleanupAuthState = (manual = false) => {
+  try {
+    if (manual) {
+      // Solo en logout manual, limpieza completa
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-') || key === 'corilog-auth') {
+          localStorage.removeItem(key);
         }
-      } catch (error) {
-        logger.error('Error during auth cleanup', 'cleanup_auth_state', error);
-      }
-    };
-    
-    cleanupFn(manual);
-  };
-})();
+      });
+      logger.info('Manual auth cleanup completed', 'cleanup_auth_state');
+    } else {
+      // En errores, preservar sesiones válidas
+      logger.info('Preserving auth state due to temporary error', 'cleanup_auth_state');
+    }
+  } catch (error) {
+    logger.error('Error during auth cleanup', 'cleanup_auth_state', error);
+  }
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

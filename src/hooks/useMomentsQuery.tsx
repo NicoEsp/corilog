@@ -51,7 +51,13 @@ export const useMomentsQuery = () => {
           count: moments?.length || 0 
         });
         
-        return moments || [];
+        // Convert string dates to Date objects
+        const formattedMoments = (moments || []).map(moment => ({
+          ...moment,
+          date: new Date(moment.date)
+        }));
+        
+        return formattedMoments;
       } catch (error) {
         logger.error('General error in moments query', 'useMomentsQuery', error);
         throw error;
