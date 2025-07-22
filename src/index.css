@@ -64,14 +64,39 @@
     @apply font-sans font-semibold;
   }
 
-  /* Mejoras para dispositivos táctiles */
-  @media (hover: none) and (pointer: coarse) {
+  /* Mejoras responsivas para dispositivos táctiles */
+  @media (max-width: 768px) {
+    /* Eliminar hover effects en móvil */
     .hover\:scale-\[1\.02\] {
-      transform: none;
+      transform: none !important;
     }
     
     .hover\:shadow-lg {
       box-shadow: 0 4px 20px rgba(139, 151, 139, 0.1);
+    }
+
+    /* Mejorar spacing en móvil */
+    .space-y-4 > * + * {
+      margin-top: 1.5rem;
+    }
+
+    /* Optimizar containers para móvil */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  /* Pantallas muy pequeñas */
+  @media (max-width: 375px) {
+    .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    /* Reducir spacing en pantallas muy pequeñas */
+    .space-y-4 > * + * {
+      margin-top: 1rem;
     }
   }
 
@@ -112,6 +137,16 @@
   .group:hover,
   .transition-all {
     will-change: transform, opacity;
+  }
+
+  /* Reducir motion para usuarios con preferencias de accesibilidad */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .transition-all,
+    .featured-star {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 }
 
@@ -207,6 +242,32 @@
     50% { 
       transform: scale(1.2);
       box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    }
+  }
+
+  /* ============================================
+     RESPONSIVE IMPROVEMENTS
+     ============================================ */
+
+  /* Mejorar touch targets en móvil */
+  @media (max-width: 768px) {
+    button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Mejorar legibilidad de texto en móvil */
+    .line-clamp-2 {
+      -webkit-line-clamp: 3;
+      line-height: 1.5;
+    }
+  }
+
+  /* Optimizaciones para pantallas pequeñas */
+  @media (max-width: 375px) {
+    .featured-glow,
+    .featured-glow-intense {
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
     }
   }
 }

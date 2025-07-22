@@ -98,7 +98,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header onAddMoment={() => setShowAddForm(true)} />
       
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-safe">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
         {moments.length === 0 && !isLoading ? (
           <WelcomeScreen 
             onAddMoment={() => setShowAddForm(true)}
@@ -115,7 +115,7 @@ const Index = () => {
             />
             
             {viewMode === 'list' && (
-              <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto">
+              <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
                 {moments.map((moment, index) => (
                   <div
                     key={moment.id}
@@ -141,7 +141,7 @@ const Index = () => {
             )}
 
             {viewMode === 'timeline' && (
-              <div className="max-w-2xl mx-auto">
+              <div className="max-w-3xl mx-auto">
                 <Timeline 
                   moments={moments}
                   onMomentClick={setSelectedMoment}
