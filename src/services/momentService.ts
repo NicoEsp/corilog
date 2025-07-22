@@ -3,6 +3,7 @@ import { Moment, CreateMomentData } from '@/types/moment';
 import { sanitizeTitle, sanitizeNote, validateDate } from '@/utils/inputSanitization';
 import { getSecureErrorMessage } from '@/utils/errorHandling';
 import { logger } from '@/utils/logger';
+import { formatDateForDatabase } from '@/utils/dateUtils';
 import { APP_CONFIG } from '@/config/constants';
 
 export class MomentService {
@@ -69,12 +70,20 @@ export class MomentService {
     }
 
     try {
+      // Usar la nueva función para formatear la fecha sin conversión UTC
+      const formattedDate = formatDateForDatabase(momentData.date);
+      
+      logger.info('Creating moment with date', 'createMoment', {
+        originalDate: momentData.date,
+        formattedDate: formattedDate
+      });
+
       const { data, error } = await supabase
         .from('moments')
         .insert([{
           title: sanitizedTitle,
           note: sanitizedNote,
-          date: momentData.date.toISOString().split('T')[0],
+          date: formattedDate,
           photo: momentData.photo,
           user_id: userId,
           is_featured: false

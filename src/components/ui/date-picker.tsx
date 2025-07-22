@@ -1,4 +1,5 @@
 
+
 import * as React from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,7 +35,21 @@ export function DatePicker({
   const [open, setOpen] = React.useState(false);
 
   const handleSelect = (selectedDate: Date | undefined) => {
-    onSelect(selectedDate);
+    if (selectedDate) {
+      // Normalizar fecha a medianoche local para evitar problemas de zona horaria
+      const normalizedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      
+      console.log('📅 DatePicker selección:', {
+        fechaSeleccionada: selectedDate,
+        fechaNormalizada: normalizedDate,
+        fechaLocal: normalizedDate.toLocaleDateString('es-ES'),
+        zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
+      
+      onSelect(normalizedDate);
+    } else {
+      onSelect(undefined);
+    }
     setOpen(false);
   };
 
@@ -89,3 +104,4 @@ export function DatePicker({
     </Popover>
   );
 }
+
