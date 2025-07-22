@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Camera, Check, X, Loader2 } from 'lucide-react';
+import { Camera, Check, X, Loader2, AlertCircle } from 'lucide-react';
+import { DatePicker } from '@/components/ui/date-picker';
+import { validateDate, createSafeDate, sanitizeTitle, sanitizeNote } from '@/utils/inputSanitization';
+import { handleFormError } from '@/utils/errorHandling';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddMomentFormProps {
   onSave: (moment: { title: string; note: string; date: Date; photo?: string }) => void;
@@ -15,18 +19,70 @@ interface AddMomentFormProps {
 const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormProps) => {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<Date>(new Date());
   const [photo, setPhoto] = useState<string | undefined>();
+  const [errors, setErrors] = useState<{ title?: string; date?: string; general?: string }>({});
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = (): boolean => {
+    const newErrors: { title?: string; date?: string; general?: string } = {};
+    
+    // Validate title
+    const sanitizedTitle = sanitizeTitle(title);
+    if (!sanitizedTitle.trim()) {
+      newErrors.title = 'El título es requerido';
+    }
+
+    // Validate date
+    if (!date || !validateDate(date)) {
+      newErrors.date = 'Debes seleccionar una fecha válida';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (title.trim() && !isCreating) {
+    
+    if (isCreating) return;
+
+    try {
+      // Clear previous errors
+      setErrors({});
+
+      // Validate form
+      if (!validateForm()) {
+        toast({
+          title: "Error en el formulario",
+          description: "Por favor corrige los errores antes de continuar",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Sanitize inputs
+      const sanitizedTitle = sanitizeTitle(title);
+      const sanitizedNote = sanitizeNote(note);
+      const safeDate = createSafeDate(date);
+
       console.log('📝 Enviando nuevo momento desde el formulario');
+      
       onSave({
-        title: title.trim(),
-        note: note.trim(),
-        date: new Date(date),
+        title: sanitizedTitle,
+        note: sanitizedNote,
+        date: safeDate,
         photo
+      });
+
+    } catch (error) {
+      const errorMessage = handleFormError(error, 'AddMomentForm.handleSubmit');
+      setErrors({ general: errorMessage });
+      
+      toast({
+        title: "Error al guardar",
+        description: errorMessage,
+        variant: "destructive",
       });
     }
   };
@@ -34,11 +90,39 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setPhoto(reader.result as string);
+        };
+        reader.onerror = () => {
+          toast({
+            title: "Error al cargar imagen",
+            description: "No se pudo procesar la imagen seleccionada",
+            variant: "destructive",
+          });
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        toast({
+          title: "Error al cargar imagen",
+          description: "Ocurrió un error inesperado al procesar la imagen",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+      // Clear date error if it exists
+      if (errors.date) {
+        setErrors(prev => ({ ...prev, date: undefined }));
+      }
+    } else {
+      // If date is cleared, use current date as fallback
+      setDate(new Date());
     }
   };
 
@@ -67,32 +151,61 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
             </Button>
           </div>
 
+          {/* General error display */}
+          {errors.general && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errors.general}</span>
+            </div>
+          )}
+
           <div className="space-y-5">
             <div>
               <label className="block text-base sm:text-sm font-medium text-sage-700 mb-3 sm:mb-2">
-                ¿Qué momento quieres recordar?
+                ¿Qué momento quieres recordar? *
               </label>
               <Input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  // Clear title error if it exists
+                  if (errors.title) {
+                    setErrors(prev => ({ ...prev, title: undefined }));
+                  }
+                }}
                 placeholder="Primera sonrisa, primer diente..."
-                className="bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation"
+                className={`bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation ${
+                  errors.title ? 'border-red-500 focus:border-red-500' : ''
+                }`}
                 required
                 disabled={isCreating}
               />
+              {errors.title && (
+                <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.title}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-base sm:text-sm font-medium text-sage-700 mb-3 sm:mb-2">
-                Fecha
+                Fecha *
               </label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation"
+              <DatePicker
+                date={date}
+                onSelect={handleDateSelect}
+                placeholder="Seleccionar fecha del momento"
                 disabled={isCreating}
+                error={!!errors.date}
+                allowClear={false} // Don't allow clearing since date is required
               />
+              {errors.date && (
+                <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.date}
+                </p>
+              )}
             </div>
 
             <div>

@@ -28,15 +28,59 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email) && email.length <= 254;
 };
 
-export const validateDate = (date: Date): boolean => {
-  const now = new Date();
-  const oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(now.getFullYear() + 1);
+export const validateDate = (date: Date | string | null | undefined): boolean => {
+  // Handle empty or null values
+  if (!date) return false;
   
-  const hundredYearsAgo = new Date();
-  hundredYearsAgo.setFullYear(now.getFullYear() - 100);
+  let dateObj: Date;
   
-  return date >= hundredYearsAgo && date <= oneYearFromNow;
+  try {
+    // If it's a string, try to create a Date object
+    if (typeof date === 'string') {
+      // Handle empty string
+      if (date.trim() === '') return false;
+      dateObj = new Date(date);
+    } else {
+      dateObj = date;
+    }
+    
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) return false;
+    
+    const now = new Date();
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(now.getFullYear() + 1);
+    
+    const hundredYearsAgo = new Date();
+    hundredYearsAgo.setFullYear(now.getFullYear() - 100);
+    
+    return dateObj >= hundredYearsAgo && dateObj <= oneYearFromNow;
+  } catch (error) {
+    // If any error occurs during date creation or validation, return false
+    return false;
+  }
+};
+
+export const createSafeDate = (dateInput: string | Date | null | undefined): Date => {
+  // If no date provided, use current date
+  if (!dateInput) {
+    return new Date();
+  }
+  
+  try {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    
+    // If date is invalid, use current date
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date provided, using current date as fallback');
+      return new Date();
+    }
+    
+    return date;
+  } catch (error) {
+    console.warn('Error creating date, using current date as fallback:', error);
+    return new Date();
+  }
 };
 
 export const validateImageFile = (file: File): { isValid: boolean; error?: string } => {

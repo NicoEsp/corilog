@@ -7,6 +7,7 @@ export const getSecureErrorMessage = (error: any): string => {
     network: 'Error de conexión. Intenta nuevamente.',
     validation: 'Los datos ingresados no son válidos.',
     server: 'Error interno. Intenta nuevamente más tarde.',
+    date: 'La fecha seleccionada no es válida.',
     default: 'Ocurrió un error inesperado. Intenta nuevamente.'
   };
 
@@ -39,6 +40,10 @@ export const getSecureErrorMessage = (error: any): string => {
     return genericMessages.validation;
   }
 
+  if (errorMessage.includes('date') || errorMessage.includes('fecha')) {
+    return genericMessages.date;
+  }
+
   // Default to generic error message
   return genericMessages.default;
 };
@@ -50,4 +55,9 @@ export const logError = (error: any, context: string) => {
     timestamp: new Date().toISOString(),
     context
   });
+};
+
+export const handleFormError = (error: any, context: string = 'form'): string => {
+  logError(error, context);
+  return getSecureErrorMessage(error);
 };
