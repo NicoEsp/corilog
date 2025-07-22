@@ -1,112 +1,75 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import { useAuth } from '@/contexts/AuthContext';
-import { MomentService } from '@/services/momentService';
-import { MigrationService } from '@/services/migrationService';
-import { Moment, CreateMomentData } from '@/types/moment';
+import { Moment } from '@/types/moment';
 
-const MOMENTS_QUERY_KEY = 'moments';
-
-export const useMomentsQuery = (limit: number = 20, offset: number = 0) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  // Query para obtener momentos con cache automático
-  const momentsQuery = useQuery({
-    queryKey: [MOMENTS_QUERY_KEY, user?.id, limit, offset],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      // Migrar momentos del localStorage solo en la primera carga
-      if (offset === 0) {
-        await MigrationService.migrateMomentsFromLocalStorage(user.id);
+export const useMomentsQuery = () => {
+  const { user, session, forceRefresh } = useAuth();
+  
+  return useQuery({
+    queryKey: ['moments', user?.id],
+    queryFn: async (): Promise<Moment[]> => {
+      if (!user || !session) {
+        logger.info('No user or session available for moments query', 'useMomentsQuery');
+        return [];
       }
-      
-      return MomentService.fetchMoments(user.id, limit, offset);
+
+      try {
+        logger.debug('Fetching moments for user', 'useMomentsQuery', { userId: user.id });
+        
+        const { data: moments, error } = await supabase
+          .from('moments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+
+        if (error) {
+          // Verificar si es un error de autenticación
+          if (error.message?.includes('JWT') || 
+              error.message?.includes('token') || 
+              error.message?.includes('auth')) {
+            logger.error('Auth error in moments query, attempting refresh', 'useMomentsQuery', error);
+            
+            // Intentar refrescar la sesión
+            try {
+              await forceRefresh();
+              // No hacer retry aquí, React Query se encargará
+              throw error;
+            } catch (refreshError) {
+              logger.error('Failed to refresh session for moments query', 'useMomentsQuery', refreshError);
+              throw error;
+            }
+          }
+          
+          logger.error('Error fetching moments', 'useMomentsQuery', error);
+          throw error;
+        }
+
+        logger.debug('Successfully fetched moments', 'useMomentsQuery', { 
+          count: moments?.length || 0 
+        });
+        
+        return moments || [];
+      } catch (error) {
+        logger.error('General error in moments query', 'useMomentsQuery', error);
+        throw error;
+      }
     },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    gcTime: 1000 * 60 * 30, // 30 minutos
+    enabled: !!user && !!session,
+    retry: (failureCount, error: any) => {
+      // Retry automático para errores de red, pero no para errores de auth
+      if (error?.message?.includes('JWT') || 
+          error?.message?.includes('token') || 
+          error?.message?.includes('auth')) {
+        return failureCount < 2; // Solo 2 intentos para errores de auth
+      }
+      return failureCount < 3; // 3 intentos para otros errores
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 1000 * 60 * 2, // 2 minutos
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
-
-  // Mutation para crear momento con optimistic update
-  const createMomentMutation = useMutation({
-    mutationFn: async (momentData: CreateMomentData) => {
-      if (!user) throw new Error('Usuario no autenticado');
-      return MomentService.createMoment(user.id, momentData);
-    },
-    onMutate: async (newMoment) => {
-      // Cancelar queries en curso
-      await queryClient.cancelQueries({ queryKey: [MOMENTS_QUERY_KEY] });
-
-      // Snapshot del estado anterior
-      const previousMoments = queryClient.getQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset]);
-
-      // Optimistic update
-      const tempMoment: Moment = {
-        id: `temp-${Date.now()}`,
-        ...newMoment,
-        user_id: user!.id,
-        is_featured: false,
-      };
-
-      queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset], (old: Moment[] = []) => 
-        [tempMoment, ...old]
-      );
-
-      return { previousMoments };
-    },
-    onError: (err, newMoment, context) => {
-      // Revertir en caso de error
-      if (context?.previousMoments) {
-        queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset], context.previousMoments);
-      }
-    },
-    onSuccess: (newMoment) => {
-      if (newMoment) {
-        // Actualizar con el momento real del servidor
-        queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset], (old: Moment[] = []) => 
-          [newMoment, ...old.filter(m => !m.id.startsWith('temp-'))]
-        );
-      }
-    },
-  });
-
-  // Mutation para eliminar momento
-  const deleteMomentMutation = useMutation({
-    mutationFn: async (momentId: string) => {
-      if (!user) throw new Error('Usuario no autenticado');
-      const success = await MomentService.deleteMoment(user.id, momentId);
-      if (!success) throw new Error('Error al eliminar momento');
-      return momentId;
-    },
-    onMutate: async (momentId) => {
-      await queryClient.cancelQueries({ queryKey: [MOMENTS_QUERY_KEY] });
-      
-      const previousMoments = queryClient.getQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset]);
-      
-      // Optimistic update - remover momento
-      queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset], (old: Moment[] = []) => 
-        old.filter(moment => moment.id !== momentId)
-      );
-
-      return { previousMoments };
-    },
-    onError: (err, momentId, context) => {
-      if (context?.previousMoments) {
-        queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id, limit, offset], context.previousMoments);
-      }
-    },
-  });
-
-  return {
-    moments: momentsQuery.data || [],
-    isLoading: momentsQuery.isLoading,
-    error: momentsQuery.error,
-    refetch: momentsQuery.refetch,
-    createMoment: createMomentMutation.mutate,
-    deleteMoment: deleteMomentMutation.mutate,
-    isCreating: createMomentMutation.isPending,
-    isDeleting: deleteMomentMutation.isPending,
-  };
 };

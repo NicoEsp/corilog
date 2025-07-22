@@ -61,6 +61,32 @@ class Logger {
     }
   }
 
+  // Método específico para logging de eventos de autenticación
+  auth(event: string, message: string, data?: any) {
+    const authData = {
+      ...data,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+    
+    this.info(`🔐 ${event}: ${message}`, 'AUTH', authData);
+  }
+
+  // Método específico para logging de errores de sesión
+  sessionError(error: any, context: string, additionalData?: any) {
+    const sessionData = {
+      error: error?.message || 'Unknown error',
+      code: error?.code,
+      status: error?.status,
+      context,
+      timestamp: new Date().toISOString(),
+      ...additionalData
+    };
+    
+    this.error(`Session error in ${context}`, 'SESSION_ERROR', sessionData);
+  }
+
   private sendToLoggingService(logData: LogContext) {
     // Implementar envío a servicio de logging en producción
     // Por ejemplo: Sentry, LogRocket, etc.
