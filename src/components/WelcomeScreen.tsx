@@ -61,7 +61,7 @@ const WelcomeScreen = ({
       <div className="mb-8 sm:mb-12">
         <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-rose-100 to-sage-100 flex items-center justify-center mx-auto mb-6 animate-gentle-bounce">
           <img 
-            src="/lovable-uploads/cb9d0744-df64-44ee-8e4d-0876729a558f.png" 
+            src="/lovable-uploads/8ffb759a-991f-4b29-b203-5cee6b3079bb.png" 
             alt="Corilog" 
             className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
           />
