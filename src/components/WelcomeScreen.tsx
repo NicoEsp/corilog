@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Camera, Share, Calendar, Star, Image, UserPlus, LogIn } from 'lucide-react';
+import { Camera, BookOpen, Share, Calendar, Star, Image, UserPlus, LogIn } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 interface WelcomeScreenProps {
   onAddMoment: () => void;
@@ -60,11 +59,7 @@ const WelcomeScreen = ({
       {/* Hero Section */}
       <div className="mb-8 sm:mb-12">
         <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-rose-100 to-sage-100 flex items-center justify-center mx-auto mb-6 animate-gentle-bounce">
-          <img 
-            src="/lovable-uploads/8ffb759a-991f-4b29-b203-5cee6b3079bb.png" 
-            alt="Corilog" 
-            className="w-8 h-8 sm:w-12 sm:h-12 object-contain"
-          />
+          <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-sage-600" />
         </div>
         
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif-elegant text-sage-800 mb-4 px-4">
