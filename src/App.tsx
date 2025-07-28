@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -11,7 +11,8 @@ import { queryClient } from "@/lib/queryClient";
 import { Suspense, lazy } from "react";
 
 // Lazy loading para componentes pesados
-const Index = lazy(() => import("./pages/Index"));
+const Home = lazy(() => import("./pages/Home"));
+const Diario = lazy(() => import("./pages/Diario"));
 const Auth = lazy(() => import("./pages/Auth"));
 const SharedMoment = lazy(() => import("./pages/SharedMoment"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -35,11 +36,13 @@ const App = () => (
               <Routes>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/shared/:token" element={<SharedMoment />} />
-                <Route path="/" element={
+                <Route path="/home" element={<Home />} />
+                <Route path="/diario" element={
                   <ProtectedRoute>
-                    <Index />
+                    <Diario />
                   </ProtectedRoute>
                 } />
+                <Route path="/" element={<Navigate to="/home" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

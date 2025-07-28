@@ -37,7 +37,8 @@ export const APP_CONFIG = {
 
 // URLs y rutas
 export const ROUTES = {
-  HOME: '/',
+  HOME: '/home',
+  DIARIO: '/diario',
   AUTH: '/auth',
   SHARED_MOMENT: '/shared',
   NOT_FOUND: '/404',
