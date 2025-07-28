@@ -70,7 +70,7 @@ const WelcomeScreen = ({
         
         
         <h2 className="text-xl sm:text-2xl font-serif-elegant text-sage-700 mb-3 px-4">
-          {authContent.title}
+          Comenzá a registrar tus momentos especiales
         </h2>
         
         
