@@ -107,8 +107,9 @@ const WelcomeScreen = ({
             <span className="text-sage-600 font-medium">¿Empezamos?</span>
           </div>
           <p className="text-sage-500 text-sm sm:text-base mb-4">Cada momento cuenta una historia. {isLoginMode ? 'Continuá la tuya.' : 'Empezá la tuya hoy.'}</p>
-          <Button onClick={handleAuthAction} variant="outline" className="border-sage-300 text-sage-700 hover:bg-sage-100 h-10 px-6">
-            {authContent.buttonText}
+          <Button onClick={onAddMoment} disabled={isCreating} className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all duration-200 hover:scale-105" size="sm">
+            <Camera className="w-4 h-4 mr-2" />
+            {isCreating ? 'Creando...' : 'Nuevo momento'}
           </Button>
         </div>
       </div>
