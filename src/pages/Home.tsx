@@ -2,10 +2,12 @@ import { useNavigate } from 'react-router-dom';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import { ROUTES } from '@/config/constants';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, BookOpen } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const handleAddMoment = () => {
     navigate(ROUTES.DIARIO, { state: { showAddForm: true } });
@@ -21,24 +23,40 @@ const Home = () => {
       <header className="w-full border-b border-border/40">
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex justify-end items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleNavigateToAuth(false)}
-              className="gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">Regístrate</span>
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => handleNavigateToAuth(true)}
-              className="gap-2"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Ingresa</span>
-            </Button>
+            {loading ? (
+              <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
+            ) : user ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate(ROUTES.DIARIO)}
+                className="gap-2"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Diario</span>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNavigateToAuth(false)}
+                  className="gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Regístrate</span>
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleNavigateToAuth(true)}
+                  className="gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">Ingresa</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
