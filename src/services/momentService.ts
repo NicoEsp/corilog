@@ -52,6 +52,28 @@ export class MomentService {
     }
   }
 
+  static async checkDuplicateMoment(userId: string, title: string, date: Date): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('moments')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('title', title.trim())
+        .eq('date', formatDateForDatabase(date))
+        .limit(1);
+
+      if (error) {
+        logger.error('Error checking duplicate moment', 'checkDuplicateMoment', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      logger.error('General error checking duplicate moment', 'checkDuplicateMoment', error);
+      return false;
+    }
+  }
+
   static async createMoment(userId: string, momentData: CreateMomentData): Promise<Moment | null> {
     logger.info('Starting moment creation', 'createMoment');
     
@@ -66,7 +88,14 @@ export class MomentService {
 
     if (!validateDate(momentData.date)) {
       logger.error('Validation error: invalid date', 'createMoment');
-      throw new Error('La fecha no es válida');
+      throw new Error('La fecha no es válida. No se pueden crear momentos con fechas futuras');
+    }
+
+    // Check for duplicates
+    const isDuplicate = await this.checkDuplicateMoment(userId, sanitizedTitle, momentData.date);
+    if (isDuplicate) {
+      logger.error('Validation error: duplicate moment', 'createMoment');
+      throw new Error('Ya existe un momento con este título en la misma fecha');
     }
 
     try {

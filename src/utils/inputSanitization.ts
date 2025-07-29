@@ -48,13 +48,14 @@ export const validateDate = (date: Date | string | null | undefined): boolean =>
     if (isNaN(dateObj.getTime())) return false;
     
     const now = new Date();
-    const oneYearFromNow = new Date();
-    oneYearFromNow.setFullYear(now.getFullYear() + 1);
+    // Set to end of today to allow moments from today
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     
     const hundredYearsAgo = new Date();
     hundredYearsAgo.setFullYear(now.getFullYear() - 100);
     
-    return dateObj >= hundredYearsAgo && dateObj <= oneYearFromNow;
+    // Don't allow future dates - only today and past dates
+    return dateObj >= hundredYearsAgo && dateObj <= today;
   } catch (error) {
     // If any error occurs during date creation or validation, return false
     return false;

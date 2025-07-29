@@ -96,9 +96,11 @@ export function DatePicker({
           initialFocus
           className="p-3 pointer-events-auto"
           locale={es}
-          disabled={(date) =>
-            date > new Date() || date < new Date("1900-01-01")
-          }
+          disabled={(date) => {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // End of today
+            return date > today || date < new Date("1900-01-01");
+          }}
         />
       </PopoverContent>
     </Popover>

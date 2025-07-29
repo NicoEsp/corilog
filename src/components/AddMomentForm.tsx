@@ -34,8 +34,18 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
     }
 
     // Validate date
-    if (!date || !validateDate(date)) {
-      newErrors.date = 'Debes seleccionar una fecha válida';
+    if (!date) {
+      newErrors.date = 'La fecha es requerida';
+    } else {
+      // Check if date is in the future
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
+      
+      if (date > today) {
+        newErrors.date = 'No puedes crear momentos con fechas futuras';
+      } else if (!validateDate(date)) {
+        newErrors.date = 'Debes seleccionar una fecha válida';
+      }
     }
 
     setErrors(newErrors);
