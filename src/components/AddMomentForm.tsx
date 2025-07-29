@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { validateDate, createSafeDate, sanitizeTitle, sanitizeNote } from '@/utils/inputSanitization';
 import { handleFormError } from '@/utils/errorHandling';
 import { useToast } from '@/hooks/use-toast';
+import { debounce } from '@/utils/performance';
 
 interface AddMomentFormProps {
   onSave: (moment: { title: string; note: string; date: Date; photo?: string }) => void;
@@ -16,7 +17,7 @@ interface AddMomentFormProps {
   isCreating?: boolean;
 }
 
-const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormProps) => {
+const AddMomentForm = memo(({ onSave, onCancel, isCreating = false }: AddMomentFormProps) => {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState<Date>(new Date());
@@ -24,7 +25,8 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
   const [errors, setErrors] = useState<{ title?: string; date?: string; general?: string }>({});
   const { toast } = useToast();
 
-  const validateForm = (): boolean => {
+  // Memoizar validación para evitar recálculos
+  const validateForm = useCallback((): boolean => {
     const newErrors: { title?: string; date?: string; general?: string } = {};
     
     // Validate title
@@ -50,9 +52,9 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [title, date]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isCreating) return;
@@ -95,9 +97,9 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
         variant: "destructive",
       });
     }
-  };
+  }, [isCreating, validateForm, title, note, date, photo, onSave, toast]);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
@@ -121,9 +123,9 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
         });
       }
     }
-  };
+  }, [toast]);
 
-  const handleDateSelect = (selectedDate: Date | undefined) => {
+  const handleDateSelect = useCallback((selectedDate: Date | undefined) => {
     if (selectedDate) {
       setDate(selectedDate);
       // Clear date error if it exists
@@ -134,7 +136,32 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
       // If date is cleared, use current date as fallback
       setDate(new Date());
     }
-  };
+  }, [errors.date]);
+
+  // Callbacks optimizados para inputs
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+    if (errors.title) {
+      setErrors(prev => ({ ...prev, title: undefined }));
+    }
+  }, [errors.title]);
+
+  const handleNoteChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNote(e.target.value);
+  }, []);
+
+  // Memoizar clases CSS para prevenir recálculos
+  const titleInputClassName = useMemo(() => {
+    const baseClasses = "bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation";
+    return errors.title ? `${baseClasses} border-red-500 focus:border-red-500` : baseClasses;
+  }, [errors.title]);
+
+  const photoLabelClassName = useMemo(() => {
+    const baseClasses = "flex-1 flex items-center justify-center gap-3 p-4 sm:p-3 border border-sage-200 rounded-lg bg-cream-50 transition-colors touch-manipulation h-12 sm:h-auto";
+    return !isCreating ? `${baseClasses} cursor-pointer hover:bg-cream-100` : `${baseClasses} opacity-50 cursor-not-allowed`;
+  }, [isCreating]);
+
+  const isFormValid = useMemo(() => title.trim().length > 0, [title]);
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -176,17 +203,9 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
               </label>
               <Input
                 value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  // Clear title error if it exists
-                  if (errors.title) {
-                    setErrors(prev => ({ ...prev, title: undefined }));
-                  }
-                }}
+                onChange={handleTitleChange}
                 placeholder="Primera sonrisa, primer diente..."
-                className={`bg-cream-50 border-sage-200 focus:border-rose-300 text-base h-12 sm:h-10 touch-manipulation ${
-                  errors.title ? 'border-red-500 focus:border-red-500' : ''
-                }`}
+                className={titleInputClassName}
                 required
                 disabled={isCreating}
               />
@@ -224,7 +243,7 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
               </label>
               <Textarea
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={handleNoteChange}
                 placeholder="Describe este momento especial..."
                 className="bg-cream-50 border-sage-200 focus:border-rose-300 resize-none text-base min-h-[100px] sm:min-h-[80px] touch-manipulation"
                 rows={4}
@@ -247,9 +266,7 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
                 />
                 <label
                   htmlFor="photo-upload"
-                  className={`flex-1 flex items-center justify-center gap-3 p-4 sm:p-3 border border-sage-200 rounded-lg bg-cream-50 ${
-                    !isCreating ? 'cursor-pointer hover:bg-cream-100' : 'opacity-50 cursor-not-allowed'
-                  } transition-colors touch-manipulation h-12 sm:h-auto`}
+                  className={photoLabelClassName}
                 >
                   <Camera className="w-5 h-5 sm:w-4 sm:h-4 text-sage-500" />
                   <span className="text-base sm:text-sm text-sage-600">
@@ -283,7 +300,7 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
             <Button
               type="submit"
               className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 sm:h-11 text-base touch-manipulation disabled:opacity-50"
-              disabled={!title.trim() || isCreating}
+              disabled={!isFormValid || isCreating}
             >
               {isCreating ? (
                 <>
@@ -302,6 +319,7 @@ const AddMomentForm = ({ onSave, onCancel, isCreating = false }: AddMomentFormPr
       </Card>
     </div>
   );
-};
+});
 
+AddMomentForm.displayName = 'AddMomentForm';
 export default AddMomentForm;

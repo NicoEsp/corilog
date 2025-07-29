@@ -25,6 +25,21 @@ interface MomentCardProps {
   onToggleFeatured: (momentId: string, isFeatured: boolean) => void;
 }
 
+// Optimizar comparación para evitar re-renders innecesarios
+const arePropsEqual = (prevProps: MomentCardProps, nextProps: MomentCardProps) => {
+  return (
+    prevProps.moment.id === nextProps.moment.id &&
+    prevProps.moment.title === nextProps.moment.title &&
+    prevProps.moment.note === nextProps.moment.note &&
+    prevProps.moment.date.getTime() === nextProps.moment.date.getTime() &&
+    prevProps.moment.photo === nextProps.moment.photo &&
+    prevProps.moment.is_featured === nextProps.moment.is_featured &&
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onToggleFeatured === nextProps.onToggleFeatured
+  );
+};
+
 const MomentCard = memo(({
   moment,
   onClick,
@@ -186,7 +201,7 @@ const MomentCard = memo(({
       />
     </>
   );
-});
+}, arePropsEqual);
 
 MomentCard.displayName = 'MomentCard';
 export default MomentCard;

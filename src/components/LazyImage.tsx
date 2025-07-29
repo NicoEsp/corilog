@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Image } from 'lucide-react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
@@ -10,7 +10,7 @@ interface LazyImageProps {
   placeholder?: React.ReactNode;
 }
 
-const LazyImage = ({ src, alt, className = '', placeholder }: LazyImageProps) => {
+const LazyImage = memo(({ src, alt, className = '', placeholder }: LazyImageProps) => {
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
@@ -79,6 +79,7 @@ const LazyImage = ({ src, alt, className = '', placeholder }: LazyImageProps) =>
       )}
     </div>
   );
-};
+});
 
+LazyImage.displayName = 'LazyImage';
 export default LazyImage;

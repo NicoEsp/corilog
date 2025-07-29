@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
@@ -10,7 +10,7 @@ import MomentsHeader from '@/components/MomentsHeader';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 import { useToast } from '@/hooks/use-toast';
 
-const Diario = () => {
+const Diario = memo(() => {
   const location = useLocation();
   const { 
     moments, 
@@ -39,27 +39,28 @@ const Diario = () => {
     }
   }, [location.state]);
 
-  const handleAddMoment = async (newMoment: any) => {
+  // Memoizar callbacks para evitar re-renders
+  const handleAddMoment = useCallback(async (newMoment: any) => {
     console.log('🎯 Creando nuevo momento desde Diario');
     createMoment(newMoment);
     setShowAddForm(false);
-  };
+  }, [createMoment]);
 
-  const handleDeleteMoment = async (momentId: string) => {
+  const handleDeleteMoment = useCallback(async (momentId: string) => {
     deleteMoment(momentId);
-  };
+  }, [deleteMoment]);
 
-  const handleToggleFeatured = async (momentId: string, isFeatured: boolean) => {
+  const handleToggleFeatured = useCallback(async (momentId: string, isFeatured: boolean) => {
     toggleFeatured({ momentId, isFeatured });
-  };
+  }, [toggleFeatured]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isLoadingMore) {
       fetchNextPage();
     }
-  };
+  }, [hasNextPage, isLoadingMore, fetchNextPage]);
 
-  const handlePremiumFeatureClick = (featureName: string) => {
+  const handlePremiumFeatureClick = useCallback((featureName: string) => {
     const premiumMessages: Record<string, string> = {
       'Carta al Futuro': '"Carta al Futuro" es una función premium que estará disponible próximamente.',
       'Exportar a E-book': '"Exportar a E-book" es una función premium que estará disponible próximamente.'
@@ -70,12 +71,15 @@ const Diario = () => {
       description: premiumMessages[featureName] || `"${featureName}" es una función premium que estará disponible próximamente.`,
       variant: "default"
     });
-  };
+  }, [toast]);
+
+  const handleShowAddForm = useCallback(() => setShowAddForm(true), []);
+  const handleHideAddForm = useCallback(() => setShowAddForm(false), []);
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header onAddMoment={() => setShowAddForm(true)} />
+        <Header onAddMoment={handleShowAddForm} />
         <main className="container mx-auto px-4 py-8">
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600 mx-auto mb-4"></div>
@@ -99,7 +103,7 @@ const Diario = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onAddMoment={() => setShowAddForm(true)} />
+      <Header onAddMoment={handleShowAddForm} />
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
         <div className="max-w-4xl mx-auto">
@@ -157,12 +161,13 @@ const Diario = () => {
       {showAddForm && (
         <AddMomentForm
           onSave={handleAddMoment}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={handleHideAddForm}
           isCreating={isCreating}
         />
       )}
     </div>
   );
-};
+});
 
+Diario.displayName = 'Diario';
 export default Diario;
