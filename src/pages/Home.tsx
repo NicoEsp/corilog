@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import UserStatsCard from '@/components/UserStatsCard';
+import StreakCounter from '@/components/StreakCounter';
 import { ROUTES } from '@/config/constants';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, BookOpen } from 'lucide-react';
@@ -27,15 +28,18 @@ const Home = () => {
             {loading ? (
               <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
             ) : user ? (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => navigate(ROUTES.DIARIO)}
-                className="gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Diario</span>
-              </Button>
+              <>
+                <StreakCounter />
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate(ROUTES.DIARIO)}
+                  className="gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">Diario</span>
+                </Button>
+              </>
             ) : (
               <>
                 <Button

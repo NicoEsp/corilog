@@ -128,6 +128,36 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_rewards: {
+        Row: {
+          claimed_at: string
+          created_at: string
+          id: string
+          reward_data: Json | null
+          reward_type: string
+          streak_days: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          reward_data?: Json | null
+          reward_type: string
+          streak_days: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          reward_data?: Json | null
+          reward_type?: string
+          streak_days?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string
@@ -171,6 +201,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          last_reward_date: string | null
+          longest_streak: number
+          streak_start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          last_reward_date?: string | null
+          longest_streak?: number
+          streak_start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          last_reward_date?: string | null
+          longest_streak?: number
+          streak_start_date?: string | null
           updated_at?: string
           user_id?: string
         }

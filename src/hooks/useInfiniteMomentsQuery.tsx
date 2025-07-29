@@ -5,6 +5,7 @@ import { MomentService } from '@/services/momentService';
 import { MigrationService } from '@/services/migrationService';
 import { Moment, CreateMomentData } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
+import { streakService } from '@/services/streakService';
 
 const MOMENTS_QUERY_KEY = 'moments';
 const PAGE_SIZE = 10;
@@ -124,6 +125,14 @@ export const useInfiniteMomentsQuery = () => {
           
           return { ...old, pages: newPages };
         });
+
+        // Update streak after successful moment creation
+        if (user?.id) {
+          streakService.updateUserStreak(user.id).catch(console.error);
+          // Invalidate streak queries to trigger refresh
+          queryClient.invalidateQueries({ queryKey: ['userStreak', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['streakRewards', user.id] });
+        }
 
         // Toast de confirmación final (opcional, más sutil)
         toast({

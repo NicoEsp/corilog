@@ -7,11 +7,15 @@ import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
 import LoadMoreMoments from '@/components/LoadMoreMoments';
 import MomentsHeader from '@/components/MomentsHeader';
+import StreakRewardModal from '@/components/StreakRewardModal';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
+import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Diario = memo(() => {
   const location = useLocation();
+  const { user } = useAuth();
   const { 
     moments, 
     isLoading, 
@@ -23,6 +27,12 @@ const Diario = memo(() => {
     toggleFeatured,
     isCreating 
   } = useInfiniteMomentsQuery();
+  
+  const {
+    showWeeklyReward,
+    setShowWeeklyReward,
+    weeklyReward
+  } = useStreak();
   
   const { toast } = useToast();
   
@@ -165,6 +175,14 @@ const Diario = memo(() => {
           isCreating={isCreating}
         />
       )}
+
+      {/* Streak Reward Modal */}
+      <StreakRewardModal
+        isOpen={showWeeklyReward}
+        onClose={() => setShowWeeklyReward(false)}
+        streakDays={7}
+        userDisplayName={user?.email?.split('@')[0] || 'Usuario'}
+      />
     </div>
   );
 });

@@ -5,6 +5,7 @@ import { useRole } from '@/contexts/RoleContext';
 import AccountDropdown from './AccountDropdown';
 import MobileNav from './MobileNav';
 import ReconnectionBanner from './ReconnectionBanner';
+import StreakCounter from './StreakCounter';
 interface HeaderProps {
   onAddMoment: () => void;
 }
@@ -63,6 +64,8 @@ const Header = ({
             {user && role && <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor()}`}>
                 {getRoleDisplay()}
               </div>}
+            
+            {user && <StreakCounter />}
             
             {user && <AccountDropdown />}
             
