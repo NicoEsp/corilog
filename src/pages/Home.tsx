@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import WelcomeScreen from '@/components/WelcomeScreen';
+import UserStatsCard from '@/components/UserStatsCard';
 import { ROUTES } from '@/config/constants';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, BookOpen } from 'lucide-react';
@@ -62,6 +63,12 @@ const Home = () => {
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {user && (
+          <div className="mb-8">
+            <UserStatsCard />
+          </div>
+        )}
+        
         <WelcomeScreen 
           onAddMoment={handleAddMoment}
           isCreating={false}
