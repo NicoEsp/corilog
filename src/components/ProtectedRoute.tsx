@@ -21,7 +21,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  // Pequeño delay antes de redirigir para evitar conflictos con OAuth
   if (!user) {
+    setTimeout(() => {
+      if (!user) return;
+    }, 100);
     return <Navigate to={ROUTES.AUTH} replace />;
   }
 

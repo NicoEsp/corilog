@@ -180,17 +180,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               expiresAt: session?.expires_at ? new Date(session.expires_at * 1000) : null
             });
 
-            // Si es OAuth (Google), dar tiempo extra para que se estabilice la sesión
+            // OAuth sign-in completado - dejar que AuthCallback maneje la redirección
             if (provider === 'google') {
-              logger.info('🔗 OAuth sign-in detected, allowing session to stabilize', 'AuthContext');
-              // Pequeño delay para que la sesión se estabilice completamente
-              setTimeout(() => {
-                if (mounted && window.location.pathname === '/home') {
-                  // Si estamos en /home y deberíamos estar en /diario, redirigir
-                  logger.info('🔀 Redirecting from /home to /diario after OAuth', 'AuthContext');
-                  window.location.href = '/diario';
-                }
-              }, 100);
+              logger.info('🔗 OAuth sign-in detected, session established', 'AuthContext');
             }
           }
         } catch (error) {

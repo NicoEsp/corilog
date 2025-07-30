@@ -11,26 +11,51 @@ const AuthCallback = () => {
       try {
         logger.info('🔗 Processing OAuth callback', 'AuthCallback');
         
-        // Verificar si hay una sesión válida después del OAuth
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Pequeño delay para permitir que Supabase procese completamente el OAuth
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (error) {
-          logger.error('❌ Error getting session in callback', 'auth_callback', error);
-          navigate('/auth', { replace: true });
-          return;
+        // Retry logic para manejar casos donde la sesión no está lista inmediatamente
+        let attempts = 0;
+        const maxAttempts = 3;
+        let session = null;
+        
+        while (attempts < maxAttempts && !session) {
+          attempts++;
+          logger.info(`🔄 Attempting to get session (attempt ${attempts}/${maxAttempts})`, 'AuthCallback');
+          
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            logger.error('❌ Error getting session in callback', 'auth_callback', error);
+            if (attempts === maxAttempts) {
+              navigate('/auth', { replace: true });
+              return;
+            }
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          
+          session = data.session;
+          
+          if (!session && attempts < maxAttempts) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
 
         if (session?.user) {
           logger.info('✅ OAuth callback successful', 'AuthCallback', {
             userId: session.user.id,
             email: session.user.email,
-            provider: session.user.app_metadata?.provider
+            provider: session.user.app_metadata?.provider,
+            attempts
           });
           
           // Redirigir al diario
           navigate('/diario', { replace: true });
         } else {
-          logger.warn('⚠️ No session found after OAuth callback', 'AuthCallback');
+          logger.warn('⚠️ No session found after OAuth callback after all attempts', 'AuthCallback');
           navigate('/auth', { replace: true });
         }
       } catch (error) {
