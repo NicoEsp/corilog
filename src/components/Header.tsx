@@ -61,11 +61,11 @@ const Header = ({
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-3">
+            {user && <StreakCounter />}
+            
             {user && role && <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor()}`}>
                 {getRoleDisplay()}
               </div>}
-            
-            {user && <StreakCounter />}
             
             {user && <AccountDropdown />}
             
