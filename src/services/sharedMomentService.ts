@@ -58,7 +58,15 @@ export class SharedMomentService {
 
   static async sendInvitations(shareToken: string, recipientEmails: string[], momentTitle: string, senderName: string): Promise<boolean> {
     try {
-      const { error } = await supabase.functions.invoke('send-invitation', {
+      console.log('🚀 Iniciando envío de invitaciones:', {
+        shareToken,
+        recipientEmails,
+        momentTitle,
+        senderName,
+        timestamp: new Date().toISOString()
+      });
+
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           shareToken,
           recipientEmails,
@@ -67,16 +75,30 @@ export class SharedMomentService {
         }
       });
 
+      console.log('📡 Respuesta de edge function:', {
+        data,
+        error,
+        hasData: !!data,
+        hasError: !!error,
+        errorDetails: error ? {
+          message: error.message,
+          context: error.context,
+          details: error.details
+        } : null
+      });
+
       if (error) {
-        logError(error, 'send_invitations');
+        console.error('❌ Error específico de Supabase function:', error);
+        logError(error, 'send_invitations_supabase_error');
         toast({
           title: "Error enviando invitaciones",
-          description: getSecureErrorMessage(error),
+          description: `Error de Supabase: ${error.message || getSecureErrorMessage(error)}`,
           variant: "destructive",
         });
         return false;
       }
 
+      console.log('✅ Invitaciones enviadas exitosamente');
       toast({
         title: "¡Invitaciones enviadas!",
         description: `Se han enviado ${recipientEmails.length} invitación(es) exitosamente`,
@@ -84,7 +106,19 @@ export class SharedMomentService {
 
       return true;
     } catch (error) {
+      console.error('💥 Error general en sendInvitations:', {
+        error,
+        message: error instanceof Error ? error.message : 'Error desconocido',
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
       logError(error, 'send_invitations_general');
+      toast({
+        title: "Error enviando invitaciones",
+        description: `Error de conexión: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        variant: "destructive",
+      });
       return false;
     }
   }
