@@ -17,12 +17,10 @@ const StreakCounter = ({ className = "" }: StreakCounterProps) => {
     );
   }
 
-  if (currentStreak === 0) {
-    return null; // Don't show counter if no streak
-  }
 
   const getStreakColor = () => {
     if (isStreakAtRisk) return 'text-orange-600 bg-orange-50 border-orange-200 animate-pulse';
+    if (currentStreak === 0) return 'text-muted-foreground bg-muted/50 border-border hover:bg-muted';
     if (currentStreak >= 30) return 'text-purple-600 bg-purple-50 border-purple-200';
     if (currentStreak >= 7) return 'text-amber-600 bg-amber-50 border-amber-200';
     return 'text-rose-600 bg-rose-50 border-rose-200';
@@ -30,6 +28,7 @@ const StreakCounter = ({ className = "" }: StreakCounterProps) => {
 
   const getFlameColor = () => {
     if (isStreakAtRisk) return 'text-orange-600';
+    if (currentStreak === 0) return 'text-muted-foreground';
     if (currentStreak >= 30) return 'text-purple-600';
     if (currentStreak >= 7) return 'text-amber-600';
     return 'text-rose-600';
@@ -45,7 +44,7 @@ const StreakCounter = ({ className = "" }: StreakCounterProps) => {
       <span className="text-xs font-medium">
         {currentStreak}
         <span className="hidden sm:inline ml-1">
-          {currentStreak === 1 ? 'día' : 'días'}
+          {currentStreak === 0 ? '¡Comienza!' : currentStreak === 1 ? 'día' : 'días'}
         </span>
       </span>
       {isStreakAtRisk && (
