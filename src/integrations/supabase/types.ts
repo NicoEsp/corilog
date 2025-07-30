@@ -247,6 +247,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_user_streak: {
+        Args: { p_user_id: string }
+        Returns: {
+          current_streak: number
+          longest_streak: number
+          last_activity_date: string
+          streak_start_date: string
+        }[]
+      }
       get_user_role: {
         Args: { user_id?: string }
         Returns: string
@@ -264,6 +273,20 @@ export type Database = {
           p_success: boolean
         }
         Returns: undefined
+      }
+      update_user_streak_optimized: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          current_streak: number
+          longest_streak: number
+          last_activity_date: string
+          streak_start_date: string
+          last_reward_date: string
+          created_at: string
+          updated_at: string
+        }[]
       }
       validate_shared_moment_access: {
         Args: { p_share_token: string; p_email: string }

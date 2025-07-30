@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserStats } from '@/hooks/useUserStats';
-import { useStreak } from '@/hooks/useStreak';
+import { useStreakData } from '@/hooks/useStreakData';
 import { BookOpen, Calendar, Clock, Flame } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const UserStatsCard = () => {
   const { data: stats, isLoading } = useUserStats();
-  const { currentStreak, isLoading: isLoadingStreak } = useStreak();
+  const { currentStreak, isLoading: isLoadingStreak } = useStreakData();
 
   if (isLoading || isLoadingStreak) {
     return (

@@ -5,7 +5,6 @@ import { MomentService } from '@/services/momentService';
 import { MigrationService } from '@/services/migrationService';
 import { Moment, CreateMomentData } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
-import { streakService } from '@/services/streakService';
 
 const MOMENTS_QUERY_KEY = 'moments';
 const PAGE_SIZE = 10;
@@ -126,21 +125,9 @@ export const useInfiniteMomentsQuery = () => {
           return { ...old, pages: newPages };
         });
 
-        // Update streak after successful moment creation
+        // Invalidate streak data to trigger refresh with optimized hook
         if (user?.id) {
-          streakService.updateUserStreak(user.id).then((updatedStreak) => {
-            if (updatedStreak && [3, 5, 7, 10, 14, 21, 30].includes(updatedStreak.current_streak)) {
-              toast({
-                title: "¡Hito alcanzado!",
-                description: `¡${updatedStreak.current_streak} días consecutivos! Sigue así 🔥`,
-                duration: 4000,
-              });
-            }
-          }).catch(console.error);
-          
-          // Invalidate streak queries to trigger refresh
-          queryClient.invalidateQueries({ queryKey: ['userStreak', user.id] });
-          queryClient.invalidateQueries({ queryKey: ['streakRewards', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['streakData', user.id] });
         }
 
         // Toast de confirmación final (opcional, más sutil)

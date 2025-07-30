@@ -42,6 +42,9 @@ pop3_port = 54327
 [functions.send-invitation]
 verify_jwt = true
 
+[functions.calculate-streak]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 port = 54326
