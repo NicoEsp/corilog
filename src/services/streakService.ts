@@ -261,6 +261,31 @@ class StreakService {
 
     return (data || []) as StreakReward[];
   }
+
+  async checkStreakExpiration(userId: string): Promise<boolean> {
+    const userStreak = await this.getUserStreak(userId);
+    if (!userStreak || userStreak.current_streak === 0) return false;
+
+    const lastActivityDate = userStreak.last_activity_date;
+    if (!lastActivityDate) return false;
+
+    const daysSinceLastActivity = differenceInDays(new Date(), new Date(lastActivityDate));
+    
+    // If more than 1 day has passed, streak is broken
+    if (daysSinceLastActivity > 1) {
+      await this.updateUserStreak(userId); // This will recalculate and update the streak
+      return true; // Streak was broken
+    }
+
+    return false; // Streak is still active
+  }
+
+  isStreakAtRisk(lastActivityDate: string | null): boolean {
+    if (!lastActivityDate) return false;
+    
+    const daysSinceLastActivity = differenceInDays(new Date(), new Date(lastActivityDate));
+    return daysSinceLastActivity === 1; // Risk if yesterday was the last activity
+  }
 }
 
 export const streakService = new StreakService();

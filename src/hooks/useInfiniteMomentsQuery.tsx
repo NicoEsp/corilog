@@ -128,7 +128,16 @@ export const useInfiniteMomentsQuery = () => {
 
         // Update streak after successful moment creation
         if (user?.id) {
-          streakService.updateUserStreak(user.id).catch(console.error);
+          streakService.updateUserStreak(user.id).then((updatedStreak) => {
+            if (updatedStreak && [3, 5, 7, 10, 14, 21, 30].includes(updatedStreak.current_streak)) {
+              toast({
+                title: "¡Hito alcanzado!",
+                description: `¡${updatedStreak.current_streak} días consecutivos! Sigue así 🔥`,
+                duration: 4000,
+              });
+            }
+          }).catch(console.error);
+          
           // Invalidate streak queries to trigger refresh
           queryClient.invalidateQueries({ queryKey: ['userStreak', user.id] });
           queryClient.invalidateQueries({ queryKey: ['streakRewards', user.id] });
