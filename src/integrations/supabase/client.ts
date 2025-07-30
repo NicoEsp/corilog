@@ -3,8 +3,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://xgukkzjwudbxyiohspsv.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhndWtremp3dWRieHlpb2hzcHN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1NjE2NTAsImV4cCI6MjA2NDEzNzY1MH0.o7NqJ5pNNhDEuk5l58k_Wivn2qrszNOan1PNcFLVW78";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_KEY as string;
 
 // Configuración mejorada para mejor persistencia de sesiones
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

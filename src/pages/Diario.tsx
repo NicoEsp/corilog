@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
-import MomentCard from '@/components/MomentCard';
+import VirtualizedMomentList from '@/components/VirtualizedMomentList';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
 import Timeline from '@/components/Timeline';
@@ -126,21 +126,13 @@ const Diario = memo(() => {
           
           {viewMode === 'list' && (
             <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
-              {moments.map((moment, index) => (
-                <div
-                  key={moment.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${(index % 10) * 0.1}s` }}
-                >
-                  <MomentCard 
-                    moment={moment} 
-                    onClick={() => setSelectedMoment(moment)}
-                    onDelete={handleDeleteMoment}
-                    onToggleFeatured={handleToggleFeatured}
-                  />
-                </div>
-              ))}
-              
+              <VirtualizedMomentList
+                moments={moments}
+                onSelect={setSelectedMoment}
+                onDelete={handleDeleteMoment}
+                onToggleFeatured={handleToggleFeatured}
+              />
+
               <LoadMoreMoments
                 hasNextPage={hasNextPage}
                 isLoadingMore={isLoadingMore}
