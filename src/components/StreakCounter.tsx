@@ -43,6 +43,11 @@ const StreakCounter = ({ className = "" }: StreakCounterProps) => {
       )}
       <span className="text-xs font-medium">
         {currentStreak}
+        {/* Mobile abbreviated text */}
+        <span className="sm:hidden ml-1">
+          {currentStreak === 0 ? 'Comenzá' : 'M'}
+        </span>
+        {/* Desktop full text */}
         <span className="hidden sm:inline ml-1">
           {currentStreak === 0 ? 'Comenzá' : currentStreak === 1 ? 'momento' : 'momentos'}
         </span>
