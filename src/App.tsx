@@ -14,6 +14,7 @@ import { Suspense, lazy } from "react";
 const Home = lazy(() => import("./pages/Home"));
 const Diario = lazy(() => import("./pages/Diario"));
 const Auth = lazy(() => import("./pages/Auth"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const SharedMoment = lazy(() => import("./pages/SharedMoment"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -35,6 +36,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/shared/:token" element={<SharedMoment />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/diario" element={

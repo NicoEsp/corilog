@@ -146,10 +146,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       async (event, session) => {
         if (!mounted) return;
 
-        logger.info('Auth state change', 'AuthContext', { 
+        logger.info('🔐 Auth state change', 'AuthContext', { 
           event, 
           hasSession: !!session,
-          userId: session?.user?.id 
+          userId: session?.user?.id,
+          provider: session?.user?.app_metadata?.provider || 'unknown'
         });
         
         try {
@@ -163,21 +164,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (event === 'SIGNED_OUT') {
             // Solo limpiar en logout manual, no automático
             if (!session) {
-              logger.info('User signed out', 'AuthContext');
+              logger.info('👋 User signed out', 'AuthContext');
               cleanupAuthState(false); // No manual cleanup
             }
           } else if (event === 'TOKEN_REFRESHED') {
-            logger.info('Token refreshed successfully', 'AuthContext', {
+            logger.info('🔄 Token refreshed successfully', 'AuthContext', {
               expiresAt: session?.expires_at ? new Date(session.expires_at * 1000) : null
             });
           } else if (event === 'SIGNED_IN' && session?.user) {
-            logger.info('User signed in', 'AuthContext', { 
+            const provider = session.user.app_metadata?.provider || 'unknown';
+            logger.info('✅ User signed in', 'AuthContext', { 
               email: session.user.email,
+              provider: provider,
+              via_oauth: provider === 'google',
               expiresAt: session?.expires_at ? new Date(session.expires_at * 1000) : null
             });
+
+            // Si es OAuth (Google), dar tiempo extra para que se estabilice la sesión
+            if (provider === 'google') {
+              logger.info('🔗 OAuth sign-in detected, allowing session to stabilize', 'AuthContext');
+              // Pequeño delay para que la sesión se estabilice completamente
+              setTimeout(() => {
+                if (mounted && window.location.pathname === '/home') {
+                  // Si estamos en /home y deberíamos estar en /diario, redirigir
+                  logger.info('🔀 Redirecting from /home to /diario after OAuth', 'AuthContext');
+                  window.location.href = '/diario';
+                }
+              }, 100);
+            }
           }
         } catch (error) {
-          logger.error('Error in auth state change handler', 'auth_state_change', error);
+          logger.error('💥 Error in auth state change handler', 'auth_state_change', error);
           handleAuthError(error, 'onAuthStateChange');
         }
       }
