@@ -10,7 +10,7 @@ const siteUrl = Deno.env.get('SITE_URL') || 'https://corilog.app';
 // CORS más flexible que permite tanto desarrollo como producción
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*", // Permite todos los orígenes
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-application-name",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Credentials": "true",
 };
