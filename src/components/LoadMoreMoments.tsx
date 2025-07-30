@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,9 +32,7 @@ const LoadMoreMoments = ({
   }, [isIntersecting, hasNextPage, isLoadingMore, onLoadMore, autoLoad]);
   if (!hasNextPage && !isLoadingMore) {
     return <div className="text-center py-8">
-        <p className="text-sage-500 handwritten text-sm">✨ Has llegado al final de tus Momentos ✨ 
-
-Puedes registrar más desde "Nuevo momento" en la barra superior</p>
+        <p className="text-sage-500 handwritten text-sm">✨ Has llegado al final de tus Momentos ✨</p>
       </div>;
   }
   return <div ref={ref} className="py-6">
