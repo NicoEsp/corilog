@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Menu, LogOut, Camera, Crown } from 'lucide-react';
+import StreakCounter from './StreakCounter';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -81,6 +82,10 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
         </SheetHeader>
 
         <div className="flex flex-col gap-4 mt-6">
+          <div className="flex justify-center">
+            <StreakCounter />
+          </div>
+          
           <Button
             onClick={handleAddMoment}
             className="w-full bg-rose-600 hover:bg-rose-700 text-white justify-start h-12 text-base"

@@ -44,7 +44,7 @@ const StreakCounter = ({ className = "" }: StreakCounterProps) => {
       <span className="text-xs font-medium">
         {currentStreak}
         <span className="hidden sm:inline ml-1">
-          {currentStreak === 0 ? '¡Comienza!' : currentStreak === 1 ? 'día' : 'días'}
+          {currentStreak === 0 ? 'Comenzá' : currentStreak === 1 ? 'momento' : 'momentos'}
         </span>
       </span>
       {isStreakAtRisk && (
