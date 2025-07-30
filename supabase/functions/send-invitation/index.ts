@@ -76,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`URL con email codificado: ${emailShareUrl}`);
       
       const emailData = {
-        from: 'Corilog <no-reply@corilog.app>',
+        from: 'Corilog <onboarding@resend.dev>',
         to: [email],
         subject: `${senderName} compartió un momento especial contigo`,
         html: `
