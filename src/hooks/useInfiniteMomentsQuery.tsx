@@ -125,13 +125,11 @@ export const useInfiniteMomentsQuery = () => {
           return { ...old, pages: newPages };
         });
 
-        // Invalidate streak data to trigger refresh with optimized hook
-        if (user?.id) {
-          // Usar el hook optimizado de streak para feedback inmediato
-          import('./useOptimizedStreak').then(({ useOptimizedStreak }) => {
-            // Solo invalidar, el hook optimizado maneja el feedback
-            queryClient.invalidateQueries({ queryKey: ['streakData', user.id] });
-          });
+        // Solo actualizar streak si el momento es de hoy
+        const isToday = new Date(newMoment.date).toDateString() === new Date().toDateString();
+        if (user?.id && isToday) {
+          console.log('📈 Momento de hoy creado - Actualizando streak');
+          queryClient.invalidateQueries({ queryKey: ['streakData', user.id] });
         }
 
         // Toast de confirmación final (opcional, más sutil)

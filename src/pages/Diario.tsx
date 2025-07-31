@@ -8,7 +8,6 @@ import LoadMoreMoments from '@/components/LoadMoreMoments';
 import MomentsHeader from '@/components/MomentsHeader';
 import StreakRewardModal from '@/components/StreakRewardModal';
 import DiarioSkeleton from '@/components/optimized/DiarioSkeleton';
-import { StreakDebugger } from '@/components/optimized/StreakDebugger';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
@@ -111,11 +110,6 @@ const Diario = memo(() => {
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
         <div className="max-w-4xl mx-auto">
-          {/* Debug only for development or specific users */}
-          {(import.meta.env.DEV || user?.email === 'nicolassespindola@gmail.com') && (
-            <StreakDebugger />
-          )}
-          
           <MomentsHeader
             momentsCount={moments.length}
             viewMode={viewMode}
