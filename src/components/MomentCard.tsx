@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import DeleteMomentDialog from './DeleteMomentDialog';
 import ShareMomentModal from './ShareMomentModal';
 import FeaturedButton from './FeaturedButton';
-import LazyImage from './LazyImage';
+import OptimizedImage from './optimized/OptimizedImage';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Moment {
@@ -101,10 +101,12 @@ const MomentCard = memo(({
           {/* Imagen */}
           <div className={`flex-shrink-0 ${isMobile ? 'w-full' : 'w-16 h-16'}`}>
             {moment.photo ? (
-              <LazyImage 
+              <OptimizedImage 
                 src={moment.photo} 
                 alt={moment.title} 
-                className={`rounded-lg object-cover ${isMobile ? 'w-full h-32' : 'w-16 h-16'}`} 
+                className={`rounded-lg object-cover ${isMobile ? 'w-full h-32' : 'w-16 h-16'}`}
+                priority={moment.is_featured} // Featured moments tienen prioridad
+                sizes={isMobile ? '100vw' : '64px'}
               />
             ) : (
               <div className={`rounded-lg bg-sage-100 flex items-center justify-center ${isMobile ? 'w-full h-32' : 'w-16 h-16'}`}>

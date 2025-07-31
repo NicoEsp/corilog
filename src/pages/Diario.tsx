@@ -12,6 +12,8 @@ import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOptimizedQueries } from '@/hooks/useOptimizedQueries';
+import { MobileOptimizations } from '@/components/optimized/MobileOptimizations';
 
 // Lazy load Timeline para mejorar performance inicial
 const Timeline = lazy(() => import('@/components/Timeline'));
@@ -19,6 +21,11 @@ const Timeline = lazy(() => import('@/components/Timeline'));
 const Diario = memo(() => {
   const location = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Hook de optimizaciones
+  useOptimizedQueries();
+  
   const { 
     moments, 
     isLoading, 
@@ -36,8 +43,6 @@ const Diario = memo(() => {
     setShowWeeklyReward,
     weeklyReward
   } = useStreak();
-  
-  const { toast } = useToast();
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<any>(null);
@@ -105,11 +110,12 @@ const Diario = memo(() => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header onAddMoment={handleShowAddForm} />
-      
-      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
-        <div className="max-w-4xl mx-auto">
+    <MobileOptimizations>
+      <div className="min-h-screen bg-background">
+        <Header onAddMoment={handleShowAddForm} />
+        
+        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
+          <div className="max-w-4xl mx-auto">
           <MomentsHeader
             momentsCount={moments.length}
             viewMode={viewMode}
@@ -182,7 +188,8 @@ const Diario = memo(() => {
         streakDays={7}
         userDisplayName={user?.email?.split('@')[0] || 'Usuario'}
       />
-    </div>
+      </div>
+    </MobileOptimizations>
   );
 });
 

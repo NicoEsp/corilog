@@ -270,4 +270,34 @@
       box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
     }
   }
+
+  /* Optimizaciones para móvil */
+  .mobile-optimized {
+    /* Suavizar scroll en iOS */
+    -webkit-overflow-scrolling: touch;
+    
+    /* Mejorar rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    /* Optimizar touch events */
+    touch-action: manipulation;
+  }
+
+  /* Modo de ahorro de energía */
+  .low-power-mode * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Shimmer effect para optimized images */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
