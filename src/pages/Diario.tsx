@@ -4,11 +4,11 @@ import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
-import LoadMoreMoments from '@/components/LoadMoreMoments';
+import { MomentsPagination } from '@/components/MomentsPagination';
 import MomentsHeader from '@/components/MomentsHeader';
 import StreakRewardModal from '@/components/StreakRewardModal';
 import DiarioSkeleton from '@/components/optimized/DiarioSkeleton';
-import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
+import { usePaginatedMomentsQuery } from '@/hooks/usePaginatedMomentsQuery';
 import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,17 +26,18 @@ const Diario = memo(() => {
   // Hook de optimizaciones
   useOptimizedQueries();
   
-  const { 
-    moments, 
-    isLoading, 
-    isLoadingMore,
-    hasNextPage,
-    fetchNextPage,
-    createMoment, 
-    deleteMoment, 
+  const {
+    moments,
+    isLoading,
+    currentPage,
+    totalPages,
+    totalCount,
+    goToPage,
+    createMoment,
+    deleteMoment,
     toggleFeatured,
-    isCreating 
-  } = useInfiniteMomentsQuery();
+    isCreating,
+  } = usePaginatedMomentsQuery();
   
   const {
     showWeeklyReward,
@@ -69,14 +70,9 @@ const Diario = memo(() => {
   }, [deleteMoment]);
 
   const handleToggleFeatured = useCallback(async (momentId: string, isFeatured: boolean) => {
-    toggleFeatured({ momentId, isFeatured });
+    toggleFeatured(momentId, isFeatured);
   }, [toggleFeatured]);
 
-  const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isLoadingMore) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isLoadingMore, fetchNextPage]);
 
   const handlePremiumFeatureClick = useCallback((featureName: string) => {
     const premiumMessages: Record<string, string> = {
@@ -140,11 +136,11 @@ const Diario = memo(() => {
                 </div>
               ))}
               
-              <LoadMoreMoments
-                hasNextPage={hasNextPage}
-                isLoadingMore={isLoadingMore}
-                onLoadMore={handleLoadMore}
-                autoLoad={true}
+              <MomentsPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                onPageChange={goToPage}
               />
             </div>
           )}
@@ -162,11 +158,11 @@ const Diario = memo(() => {
                 />
               </Suspense>
               
-              <LoadMoreMoments
-                hasNextPage={hasNextPage}
-                isLoadingMore={isLoadingMore}
-                onLoadMore={handleLoadMore}
-                autoLoad={true}
+              <MomentsPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                onPageChange={goToPage}
               />
             </div>
           )}
