@@ -22,9 +22,9 @@ export const useInfiniteMomentsQuery = () => {
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return { moments: [], hasMore: false };
       
-      // Migrar momentos del localStorage solo una vez
-      if (pageParam === 0 && !migrationCompleted) {
-        console.log('Ejecutando migración única de localStorage');
+      // Solo migrar en development, nunca en production
+      if (pageParam === 0 && !migrationCompleted && import.meta.env.DEV) {
+        console.log('Ejecutando migración única de localStorage (DEV only)');
         await MigrationService.migrateMomentsFromLocalStorage(user.id);
         migrationCompleted = true;
       }
@@ -127,7 +127,11 @@ export const useInfiniteMomentsQuery = () => {
 
         // Invalidate streak data to trigger refresh with optimized hook
         if (user?.id) {
-          queryClient.invalidateQueries({ queryKey: ['streakData', user.id] });
+          // Usar el hook optimizado de streak para feedback inmediato
+          import('./useOptimizedStreak').then(({ useOptimizedStreak }) => {
+            // Solo invalidar, el hook optimizado maneja el feedback
+            queryClient.invalidateQueries({ queryKey: ['streakData', user.id] });
+          });
         }
 
         // Toast de confirmación final (opcional, más sutil)

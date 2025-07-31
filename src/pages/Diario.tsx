@@ -1,17 +1,21 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, Suspense, lazy } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import MomentCard from '@/components/MomentCard';
 import AddMomentForm from '@/components/AddMomentForm';
 import MomentDetail from '@/components/MomentDetail';
-import Timeline from '@/components/Timeline';
 import LoadMoreMoments from '@/components/LoadMoreMoments';
 import MomentsHeader from '@/components/MomentsHeader';
 import StreakRewardModal from '@/components/StreakRewardModal';
+import DiarioSkeleton from '@/components/optimized/DiarioSkeleton';
+import { StreakDebugger } from '@/components/optimized/StreakDebugger';
 import { useInfiniteMomentsQuery } from '@/hooks/useInfiniteMomentsQuery';
 import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Lazy load Timeline para mejorar performance inicial
+const Timeline = lazy(() => import('@/components/Timeline'));
 
 const Diario = memo(() => {
   const location = useLocation();
@@ -87,17 +91,7 @@ const Diario = memo(() => {
   const handleHideAddForm = useCallback(() => setShowAddForm(false), []);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header onAddMoment={handleShowAddForm} />
-        <main className="container mx-auto px-4 py-8">
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600 mx-auto mb-4"></div>
-            <p className="text-sage-600 handwritten">Cargando tus momentos...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <DiarioSkeleton />;
   }
 
   if (selectedMoment) {
@@ -117,6 +111,11 @@ const Diario = memo(() => {
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
         <div className="max-w-4xl mx-auto">
+          {/* Debug only for development or specific users */}
+          {(import.meta.env.DEV || user?.email === 'nicolassespindola@gmail.com') && (
+            <StreakDebugger />
+          )}
+          
           <MomentsHeader
             momentsCount={moments.length}
             viewMode={viewMode}
@@ -152,10 +151,16 @@ const Diario = memo(() => {
 
           {viewMode === 'timeline' && (
             <div className="max-w-3xl mx-auto">
-              <Timeline 
-                moments={moments}
-                onMomentClick={setSelectedMoment}
-              />
+              <Suspense fallback={
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage-600"></div>
+                </div>
+              }>
+                <Timeline 
+                  moments={moments}
+                  onMomentClick={setSelectedMoment}
+                />
+              </Suspense>
               
               <LoadMoreMoments
                 hasNextPage={hasNextPage}

@@ -180,9 +180,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               expiresAt: session?.expires_at ? new Date(session.expires_at * 1000) : null
             });
 
-            // OAuth sign-in completado - dejar que AuthCallback maneje la redirección
+            // Para Google OAuth, forzar invalidación de queries para cargar datos inmediatamente
             if (provider === 'google') {
-              logger.info('🔗 OAuth sign-in detected, session established', 'AuthContext');
+              logger.info('🔗 OAuth sign-in detected, invalidating queries for fresh data', 'AuthContext');
+              setTimeout(() => {
+                // Importar queryClient en el callback para evitar dependencies
+                import('@/lib/queryClient').then(({ queryClient }) => {
+                  queryClient.invalidateQueries();
+                  queryClient.refetchQueries();
+                });
+              }, 100);
             }
           }
         } catch (error) {
