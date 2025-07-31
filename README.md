@@ -8,6 +8,10 @@ Para desarrollar Corilog, utilice las siguientes herramientas:
 - Resend
 - S3 de AWS
 
+## Configuración
+
+Crea un archivo `.env` basado en `.env.example` y completa las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_KEY` con las credenciales de tu proyecto en Supabase.
+
 Por cualquier consulta, podes contactarte conmigo en: https://x.com/nicoproducto
 
 

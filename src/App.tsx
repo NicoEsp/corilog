@@ -8,15 +8,16 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { queryClient } from "@/lib/queryClient";
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
+import { lazyWithRetry } from "@/utils/performance";
 
 // Lazy loading para componentes pesados
-const Home = lazy(() => import("./pages/Home"));
-const Diario = lazy(() => import("./pages/Diario"));
-const Auth = lazy(() => import("./pages/Auth"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const SharedMoment = lazy(() => import("./pages/SharedMoment"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const Home = lazyWithRetry(() => import("./pages/Home"));
+const Diario = lazyWithRetry(() => import("./pages/Diario"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
+const SharedMoment = lazyWithRetry(() => import("./pages/SharedMoment"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 
 // Componente de loading optimizado
 const PageLoader = () => (
