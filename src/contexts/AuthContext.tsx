@@ -180,16 +180,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               expiresAt: session?.expires_at ? new Date(session.expires_at * 1000) : null
             });
 
-            // Para Google OAuth, forzar invalidación de queries para cargar datos inmediatamente
+            // Para Google OAuth, forzar invalidación y refetch específico de momentos
             if (provider === 'google') {
-              logger.info('🔗 OAuth sign-in detected, invalidating queries for fresh data', 'AuthContext');
+              logger.info('🔗 OAuth sign-in detected, forcing moments refetch', 'AuthContext');
               setTimeout(() => {
                 // Importar queryClient en el callback para evitar dependencies
                 import('@/lib/queryClient').then(({ queryClient }) => {
-                  queryClient.invalidateQueries();
-                  queryClient.refetchQueries();
+                  // Refetch específico de momentos con retry logic
+                  queryClient.refetchQueries({ 
+                    queryKey: ['moments', session.user.id],
+                    type: 'active'
+                  }).catch((error) => {
+                    logger.error('Failed to refetch moments after Google auth', 'google_auth_refetch', error);
+                    // Retry una vez más después de 1 segundo
+                    setTimeout(() => {
+                      queryClient.refetchQueries({ 
+                        queryKey: ['moments', session.user.id],
+                        type: 'active'
+                      });
+                    }, 1000);
+                  });
+                  
+                  // También refetch datos críticos
+                  queryClient.refetchQueries({ 
+                    queryKey: ['streakData', session.user.id],
+                    type: 'active'
+                  });
+                  queryClient.refetchQueries({ 
+                    queryKey: ['userStats', session.user.id],
+                    type: 'active'
+                  });
                 });
-              }, 100);
+              }, 500); // Aumentado a 500ms para mejor timing
             }
           }
         } catch (error) {

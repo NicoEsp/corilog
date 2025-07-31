@@ -1,10 +1,12 @@
 
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 import { MomentService } from '@/services/momentService';
 import { MigrationService } from '@/services/migrationService';
 import { Moment, CreateMomentData } from '@/types/moment';
 import { toast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 const MOMENTS_QUERY_KEY = 'moments';
 const PAGE_SIZE = 10;
@@ -15,6 +17,27 @@ let migrationCompleted = false;
 export const useInfiniteMomentsQuery = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Listener para cambios de usuario (especialmente Google OAuth)
+  useEffect(() => {
+    if (user?.id) {
+      logger.info('👤 User changed in moments query, checking cache freshness', 'useInfiniteMomentsQuery');
+      
+      // Verificar si tenemos datos en cache para este usuario
+      const cachedData = queryClient.getQueryData([MOMENTS_QUERY_KEY, user.id]);
+      
+      if (!cachedData) {
+        logger.info('🔄 No cached moments for user, triggering immediate fetch', 'useInfiniteMomentsQuery');
+        // Forzar refetch inmediato si no hay datos en cache
+        setTimeout(() => {
+          queryClient.refetchQueries({ 
+            queryKey: [MOMENTS_QUERY_KEY, user.id],
+            type: 'active'
+          });
+        }, 100);
+      }
+    }
+  }, [user?.id, queryClient]);
 
   // Infinite query para momentos con paginación optimizada
   const momentsQuery = useInfiniteQuery({
@@ -41,9 +64,18 @@ export const useInfiniteMomentsQuery = () => {
       return lastPage.hasMore ? lastPage.nextOffset : undefined;
     },
     initialPageParam: 0,
-    enabled: !!user,
+    enabled: !!user?.id, // Más robusto: verificar que user.id existe
     staleTime: 1000 * 60 * 2, // 2 minutos (más frecuente para momentos recientes)
     gcTime: 1000 * 60 * 15, // 15 minutos (optimizado)
+    refetchOnMount: true, // Siempre refetch al montar el componente
+    refetchOnWindowFocus: false, // Evitar refetch excesivo
+    retry: (failureCount, error) => {
+      // Retry específico para casos de autenticación
+      if (error?.message?.includes('JWT') || error?.message?.includes('auth')) {
+        return failureCount < 2; // Retry hasta 2 veces para errores de auth
+      }
+      return failureCount < 1; // Solo 1 retry para otros errores
+    }
   });
 
   // Mutation para crear momento con feedback inmediato

@@ -52,8 +52,26 @@ const AuthCallback = () => {
             attempts
           });
           
-          // Redirigir al diario
-          navigate('/diario', { replace: true });
+          // Preload datos críticos antes de redireccionar
+          const { queryClient } = await import('@/lib/queryClient');
+          
+          // Prefetch momentos para cargar inmediatamente
+          setTimeout(() => {
+            queryClient.prefetchQuery({
+              queryKey: ['moments', session.user.id],
+              staleTime: 0 // Forzar fresh data
+            });
+            
+            queryClient.prefetchQuery({
+              queryKey: ['streakData', session.user.id],
+              staleTime: 0
+            });
+          }, 200);
+          
+          // Redirigir al diario después de iniciar prefetch
+          setTimeout(() => {
+            navigate('/diario', { replace: true });
+          }, 300);
         } else {
           logger.warn('⚠️ No session found after OAuth callback after all attempts', 'AuthCallback');
           navigate('/auth', { replace: true });
