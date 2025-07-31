@@ -113,7 +113,7 @@ const Diario = memo(() => {
         <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
           <div className="max-w-4xl mx-auto">
           <MomentsHeader
-            momentsCount={moments.length}
+            momentsCount={totalCount}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             onPremiumFeatureClick={handlePremiumFeatureClick}
