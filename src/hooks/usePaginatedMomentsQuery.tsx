@@ -85,8 +85,11 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
         currentPage
       };
     },
-    enabled: !!user?.id && !!session,
-    staleTime: APP_CONFIG.QUERY_STALE_TIME,
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 3, // 3 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: (failureCount, error: any) => {
       if (error?.status === 401 || error?.status === 403) return false;
       return failureCount < 2;
@@ -117,13 +120,18 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       return data;
     },
     onSuccess: (newMoment) => {
-      // Invalidate and refetch current page
-      queryClient.invalidateQueries({ queryKey: ['moments', 'paginated', user?.id] });
+      // Optimistic update instead of invalidation
+      queryClient.setQueryData(['moments', 'paginated', user?.id, currentPage], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: [newMoment, ...oldData.data.slice(0, APP_CONFIG.MOMENTS_PER_PAGE - 1)],
+          totalCount: oldData.totalCount + 1
+        };
+      });
       
-      // If moment is from today, invalidate streak data
-      if (isToday(new Date(newMoment.date))) {
-        queryClient.invalidateQueries({ queryKey: ['streak', user?.id] });
-      }
+      // Only invalidate streak data
+      queryClient.invalidateQueries({ queryKey: ['streakData', user?.id] });
       
       toast({
         title: "Momento guardado",
@@ -154,8 +162,15 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       return momentId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['moments', 'paginated', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['streak', user?.id] });
+      // Optimistic update
+      queryClient.setQueryData(['moments', 'paginated', user?.id, currentPage], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.filter((m: any) => m.id !== deleteMutation.variables),
+          totalCount: oldData.totalCount - 1
+        };
+      });
       
       toast({
         title: "Momento eliminado",

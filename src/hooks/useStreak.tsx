@@ -19,31 +19,13 @@ export const useStreak = () => {
     }
   }, [streakData.rewards, showWeeklyReward, lastSeenRewardId]);
 
-  // Smart expiration check on window focus
-  useEffect(() => {
-    const handleFocus = () => {
-      streakData.checkStreakExpiration();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        handleFocus();
-      }
-    });
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleFocus);
-    };
-  }, [streakData.checkStreakExpiration]);
+  // Removed smart expiration check - streaks now persist without risk alerts
 
   return {
     // Streak data
     currentStreak: streakData.currentStreak,
     longestStreak: streakData.longestStreak,
     userStreak: streakData.userStreak,
-    isStreakAtRisk: streakData.isStreakAtRisk,
     
     // Rewards data
     rewards: streakData.rewards,

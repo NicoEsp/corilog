@@ -78,10 +78,10 @@ export const useStreakData = () => {
       };
     },
     enabled: !!user,
-    staleTime: 1000 * 60 * 2, // 2 minutes - reduced from 5
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes - increased for better caching
+    gcTime: 1000 * 60 * 15, // 15 minutes
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
   });
 
   // Update streak when user creates a moment (optimized version)
@@ -135,14 +135,11 @@ export const useStreakData = () => {
           });
         }
 
-        // Invalidate and refetch data efficiently
+        // Update cache efficiently without refetch
         queryClient.setQueryData(['streakData', user.id], {
           userStreak: updatedStreak,
           rewards: data?.rewards || []
         });
-        
-        // Also refetch to get latest rewards
-        refetch();
         
         return updatedStreak;
       }
@@ -157,54 +154,14 @@ export const useStreakData = () => {
     return null;
   }, [user, data?.userStreak?.current_streak, data?.rewards, queryClient, toast, refetch]);
 
-  // Smart expiration check (only on focus/interaction)
-  const checkStreakExpiration = useCallback(async () => {
-    if (!user || !data?.userStreak?.last_activity_date) return false;
-
-    const lastActivity = new Date(data.userStreak.last_activity_date);
-    const now = new Date();
-    const daysSinceActivity = Math.floor((now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
-
-    // If more than 1 day since last activity, streak might be expired
-    if (daysSinceActivity > 1) {
-      const { data: updatedStreakData } = await supabase.rpc(
-        'update_user_streak_optimized',
-        { p_user_id: user.id }
-      );
-
-      const updatedStreak = updatedStreakData?.[0];
-      if (updatedStreak && updatedStreak.current_streak === 0 && data.userStreak.current_streak > 0) {
-        toast({
-          title: "Racha perdida",
-          description: "Tu racha se ha reiniciado. ¡Empieza una nueva desde hoy!",
-          variant: "default",
-        });
-
-        // Update cache
-        queryClient.setQueryData(['streakData', user.id], {
-          userStreak: updatedStreak,
-          rewards: data?.rewards || []
-        });
-
-        return true;
-      }
-    }
-
-    return false;
-  }, [user, data, queryClient, toast]);
+  // Removed streak expiration check - streaks now persist without alerts
 
   // Derived values with memoization
   const derivedData = useMemo(() => {
     const userStreak = data?.userStreak;
     const rewards = data?.rewards || [];
     
-    // Check if streak is at risk (more than 20 hours since last activity)
-    const isStreakAtRisk = userStreak?.last_activity_date ? (() => {
-      const lastActivity = new Date(userStreak.last_activity_date);
-      const now = new Date();
-      const hoursSinceActivity = (now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60);
-      return hoursSinceActivity > 20;
-    })() : false;
+    // Removed streak risk calculation - streaks are now purely cumulative
 
     const weeklyReward = rewards.find(r => r.reward_type === 'weekly' && r.streak_days === 7);
     const currentStreak = userStreak?.current_streak || 0;
@@ -214,7 +171,6 @@ export const useStreakData = () => {
       currentStreak,
       longestStreak,
       userStreak,
-      isStreakAtRisk,
       rewards,
       weeklyReward,
     };
@@ -225,7 +181,6 @@ export const useStreakData = () => {
     isLoading,
     error,
     updateStreak,
-    checkStreakExpiration,
     refetch,
   };
 };

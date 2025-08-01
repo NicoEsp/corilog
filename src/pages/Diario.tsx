@@ -12,8 +12,8 @@ import { usePaginatedMomentsQuery } from '@/hooks/usePaginatedMomentsQuery';
 import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOptimizedQueries } from '@/hooks/useOptimizedQueries';
-import { MobileOptimizations } from '@/components/optimized/MobileOptimizations';
+// Removed useOptimizedQueries to reduce overhead
+// Removed MobileOptimizations to reduce overhead
 
 // Lazy load Timeline para mejorar performance inicial
 const Timeline = lazy(() => import('@/components/Timeline'));
@@ -23,8 +23,7 @@ const Diario = memo(() => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Hook de optimizaciones
-  useOptimizedQueries();
+  // Removed optimization hooks to reduce overhead
   
   const {
     moments,
@@ -106,86 +105,64 @@ const Diario = memo(() => {
   }
 
   return (
-    <MobileOptimizations>
-      <div className="min-h-screen bg-background">
-        <Header onAddMoment={handleShowAddForm} />
-        
-        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
-          <div className="max-w-4xl mx-auto">
-          <MomentsHeader
-            momentsCount={totalCount}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            onPremiumFeatureClick={handlePremiumFeatureClick}
-          />
-          
-          {viewMode === 'list' && (
-            <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
-              {moments.map((moment, index) => (
-                <div
-                  key={moment.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${(index % 10) * 0.1}s` }}
-                >
-                  <MomentCard 
-                    moment={moment} 
-                    onClick={() => setSelectedMoment(moment)}
-                    onDelete={handleDeleteMoment}
-                    onToggleFeatured={handleToggleFeatured}
-                  />
-                </div>
-              ))}
-              
-              <MomentsPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalCount={totalCount}
-                onPageChange={goToPage}
-              />
-            </div>
-          )}
+    <div className="min-h-screen bg-background">
+      <Header onAddMoment={() => setShowAddForm(true)} />
+      
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
+        <div className="max-w-4xl mx-auto">
+        <MomentsHeader
+          momentsCount={totalCount}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onPremiumFeatureClick={handlePremiumFeatureClick}
+        />
 
-          {viewMode === 'timeline' && (
-            <div className="max-w-3xl mx-auto">
-              <Suspense fallback={
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage-600"></div>
-                </div>
-              }>
-                <Timeline 
-                  moments={moments}
-                  onMomentClick={setSelectedMoment}
-                />
-              </Suspense>
-              
-              <MomentsPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalCount={totalCount}
-                onPageChange={goToPage}
+        {viewMode === 'list' ? (
+          <div className="space-y-4">
+            {moments.map((moment) => (
+              <MomentCard
+                key={moment.id}
+                moment={moment}
+                onClick={() => setSelectedMoment(moment)}
+                onDelete={handleDeleteMoment}
+                onToggleFeatured={handleToggleFeatured}
               />
-            </div>
-          )}
+            ))}
+          </div>
+        ) : (
+          <Suspense fallback={<div className="animate-pulse h-96 bg-muted rounded-lg" />}>
+            <Timeline
+              moments={moments}
+              onMomentClick={setSelectedMoment}
+            />
+          </Suspense>
+        )}
+
+        <MomentsPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={goToPage}
+        />
         </div>
       </main>
 
       {showAddForm && (
         <AddMomentForm
           onSave={handleAddMoment}
-          onCancel={handleHideAddForm}
+          onCancel={() => setShowAddForm(false)}
           isCreating={isCreating}
         />
       )}
 
-      {/* Streak Reward Modal */}
-      <StreakRewardModal
-        isOpen={showWeeklyReward}
-        onClose={() => setShowWeeklyReward(false)}
-        streakDays={7}
-        userDisplayName={user?.email?.split('@')[0] || 'Usuario'}
-      />
-      </div>
-    </MobileOptimizations>
+      {showWeeklyReward && (
+        <StreakRewardModal
+          isOpen={showWeeklyReward}
+          onClose={() => setShowWeeklyReward(false)}
+          streakDays={weeklyReward?.streak_days || 7}
+        />
+      )}
+    </div>
   );
 });
 
