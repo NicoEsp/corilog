@@ -1,9 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
 const siteUrl = Deno.env.get('SITE_URL') || 'https://corilog.app';
 
@@ -63,18 +59,16 @@ const handler = async (req: Request): Promise<Response> => {
     const shareUrl = `${siteUrl}/shared/${shareToken}`;
     console.log('URL compartida:', shareUrl);
     
-    // Send emails using Resend
-    const emailResults = [];
-    
-    for (const email of recipientEmails) {
+    // Send emails using Resend de forma concurrente
+    const emailResults = await Promise.all(recipientEmails.map(async (email) => {
       console.log(`Enviando email a: ${email}`);
-      
+
       // Codificar el email en base64 para la URL
       const encodedEmail = btoa(email);
       const emailShareUrl = `${shareUrl}?email=${encodedEmail}`;
-      
+
       console.log(`URL con email codificado: ${emailShareUrl}`);
-      
+
       const emailData = {
         from: 'Corilog <no-reply@corilog.app>',
         to: [email],
@@ -138,21 +132,21 @@ const handler = async (req: Request): Promise<Response> => {
           statusText: response.statusText,
           data: responseData
         });
-        
-        emailResults.push({
+
+        return {
           email,
           success: false,
           error: `Error ${response.status}: ${responseData}`
-        });
-      } else {
-        console.log(`Email sent successfully to ${email}`);
-        emailResults.push({
-          email,
-          success: true,
-          data: responseData
-        });
+        };
       }
-    }
+
+      console.log(`Email sent successfully to ${email}`);
+      return {
+        email,
+        success: true,
+        data: responseData
+      };
+    }));
 
     console.log('Resultados de envío:', emailResults);
     
