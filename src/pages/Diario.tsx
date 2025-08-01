@@ -8,6 +8,7 @@ import { MomentsPagination } from '@/components/MomentsPagination';
 import MomentsHeader from '@/components/MomentsHeader';
 import StreakRewardModal from '@/components/StreakRewardModal';
 import DiarioSkeleton from '@/components/optimized/DiarioSkeleton';
+import EmptyState from '@/components/EmptyState';
 import { usePaginatedMomentsQuery } from '@/hooks/usePaginatedMomentsQuery';
 import { useStreak } from '@/hooks/useStreak';
 import { useToast } from '@/hooks/use-toast';
@@ -110,40 +111,49 @@ const Diario = memo(() => {
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
         <div className="max-w-4xl mx-auto">
-        <MomentsHeader
-          momentsCount={totalCount}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onPremiumFeatureClick={handlePremiumFeatureClick}
-        />
-
-        {viewMode === 'list' ? (
-          <div className="space-y-4">
-            {moments.map((moment) => (
-              <MomentCard
-                key={moment.id}
-                moment={moment}
-                onClick={() => setSelectedMoment(moment)}
-                onDelete={handleDeleteMoment}
-                onToggleFeatured={handleToggleFeatured}
-              />
-            ))}
-          </div>
-        ) : (
-          <Suspense fallback={<div className="animate-pulse h-96 bg-muted rounded-lg" />}>
-            <Timeline
-              moments={moments}
-              onMomentClick={setSelectedMoment}
+          {totalCount === 0 ? (
+            <EmptyState 
+              onAddMoment={handleShowAddForm}
+              isCreating={isCreating}
             />
-          </Suspense>
-        )}
+          ) : (
+            <>
+              <MomentsHeader
+                momentsCount={totalCount}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onPremiumFeatureClick={handlePremiumFeatureClick}
+              />
 
-        <MomentsPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          onPageChange={goToPage}
-        />
+              {viewMode === 'list' ? (
+                <div className="space-y-4">
+                  {moments.map((moment) => (
+                    <MomentCard
+                      key={moment.id}
+                      moment={moment}
+                      onClick={() => setSelectedMoment(moment)}
+                      onDelete={handleDeleteMoment}
+                      onToggleFeatured={handleToggleFeatured}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Suspense fallback={<div className="animate-pulse h-96 bg-muted rounded-lg" />}>
+                  <Timeline
+                    moments={moments}
+                    onMomentClick={setSelectedMoment}
+                  />
+                </Suspense>
+              )}
+
+              <MomentsPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                onPageChange={goToPage}
+              />
+            </>
+          )}
         </div>
       </main>
 
