@@ -88,10 +88,10 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       };
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 3, // 3 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 0, // Always fresh data to prevent cache issues
+    gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
     retry: (failureCount, error: any) => {
       if (error?.status === 401 || error?.status === 403) return false;
       return failureCount < 2;
@@ -124,12 +124,20 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
     onSuccess: async (newMoment) => {
       console.log('✅ Momento creado exitosamente:', newMoment.id);
       
+      // Transform moment data
+      const transformedMoment = {
+        ...newMoment,
+        date: new Date(newMoment.date),
+        created_at: new Date(newMoment.created_at),
+        updated_at: new Date(newMoment.updated_at)
+      };
+      
       // Optimistic update - handle transition from empty state
       queryClient.setQueryData(['moments', 'paginated', user?.id, currentPage], (oldData: any) => {
         if (!oldData) {
           // First moment created - create new data structure
           return {
-            data: [newMoment],
+            data: [transformedMoment],
             totalCount: 1,
             totalPages: 1,
             currentPage: 1
@@ -139,10 +147,16 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
         // Add to existing moments
         return {
           ...oldData,
-          data: [newMoment, ...oldData.data.slice(0, APP_CONFIG.MOMENTS_PER_PAGE - 1)],
+          data: [transformedMoment, ...oldData.data.slice(0, APP_CONFIG.MOMENTS_PER_PAGE - 1)],
           totalCount: oldData.totalCount + 1,
           totalPages: Math.ceil((oldData.totalCount + 1) / APP_CONFIG.MOMENTS_PER_PAGE)
         };
+      });
+      
+      // Force invalidation to ensure UI updates
+      queryClient.invalidateQueries({ 
+        queryKey: ['moments', 'paginated', user?.id],
+        exact: false 
       });
       
       // Update streak after successful moment creation

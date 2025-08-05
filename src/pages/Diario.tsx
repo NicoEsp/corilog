@@ -111,7 +111,7 @@ const Diario = memo(() => {
       
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-safe">
         <div className="max-w-4xl mx-auto">
-          {totalCount === 0 ? (
+          {(totalCount === 0 && !isCreating) ? (
             <EmptyState 
               onAddMoment={handleShowAddForm}
               isCreating={isCreating}
