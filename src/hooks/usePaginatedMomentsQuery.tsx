@@ -7,6 +7,7 @@ import { sanitizeTitle, sanitizeNote } from '@/utils/inputSanitization';
 import { APP_CONFIG } from '@/config/constants';
 import { isToday } from 'date-fns';
 import type { Moment, CreateMomentData } from '@/types/moment';
+import { useStreakData } from '@/hooks/useStreakData';
 
 interface PaginatedMomentsResult {
   data: Moment[];
@@ -35,6 +36,7 @@ interface UsePaginatedMomentsQueryReturn {
 export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQueryReturn {
   const { user, session } = useAuth();
   const queryClient = useQueryClient();
+  const { updateStreak } = useStreakData();
   
   const [currentPage, setCurrentPage] = useState(initialPage);
   
@@ -119,19 +121,38 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       if (error) throw error;
       return data;
     },
-    onSuccess: (newMoment) => {
-      // Optimistic update instead of invalidation
+    onSuccess: async (newMoment) => {
+      console.log('✅ Momento creado exitosamente:', newMoment.id);
+      
+      // Optimistic update - handle transition from empty state
       queryClient.setQueryData(['moments', 'paginated', user?.id, currentPage], (oldData: any) => {
-        if (!oldData) return oldData;
+        if (!oldData) {
+          // First moment created - create new data structure
+          return {
+            data: [newMoment],
+            totalCount: 1,
+            totalPages: 1,
+            currentPage: 1
+          };
+        }
+        
+        // Add to existing moments
         return {
           ...oldData,
           data: [newMoment, ...oldData.data.slice(0, APP_CONFIG.MOMENTS_PER_PAGE - 1)],
-          totalCount: oldData.totalCount + 1
+          totalCount: oldData.totalCount + 1,
+          totalPages: Math.ceil((oldData.totalCount + 1) / APP_CONFIG.MOMENTS_PER_PAGE)
         };
       });
       
-      // Only invalidate streak data
-      queryClient.invalidateQueries({ queryKey: ['streakData', user?.id] });
+      // Update streak after successful moment creation
+      try {
+        console.log('🔥 Actualizando racha para usuario:', user?.id);
+        await updateStreak();
+        console.log('✅ Racha actualizada exitosamente');
+      } catch (error) {
+        console.error('❌ Error actualizando racha:', error);
+      }
       
       toast({
         title: "Momento guardado",

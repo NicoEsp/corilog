@@ -9,6 +9,30 @@ interface EmptyStateProps {
 }
 
 const EmptyState = ({ onAddMoment, isCreating }: EmptyStateProps) => {
+  if (isCreating) {
+    return (
+      <div className="text-center py-12 sm:py-20">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6 sm:mb-8 animate-pulse">
+          <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-sage-400" />
+        </div>
+        
+        <h2 className="text-xl sm:text-2xl font-semibold text-sage-800 mb-3 sm:mb-4 px-4">
+          Guardando tu momento...
+        </h2>
+        
+        <p className="text-sage-600 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed px-4 text-sm sm:text-base font-medium">
+          Estamos guardando tu primer momento especial.
+        </p>
+        
+        <div className="flex items-center justify-center space-x-2">
+          <div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-2 h-2 bg-rose-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="text-center py-12 sm:py-20">
       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6 sm:mb-8 animate-gentle-bounce">
