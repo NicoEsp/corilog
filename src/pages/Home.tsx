@@ -4,12 +4,12 @@ import UserStatsCard from '@/components/UserStatsCard';
 import StreakCounter from '@/components/StreakCounter';
 import { ROUTES } from '@/config/constants';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, BookOpen, Twitter, Linkedin } from 'lucide-react';
+import { LogIn, UserPlus, BookOpen, Twitter, Linkedin, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   const handleAddMoment = () => {
     navigate(ROUTES.DIARIO, { state: { showAddForm: true } });
@@ -17,6 +17,10 @@ const Home = () => {
 
   const handleNavigateToAuth = (isLogin: boolean) => {
     navigate(ROUTES.AUTH, { state: { isLogin } });
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -66,6 +70,14 @@ const Home = () => {
                   >
                     <BookOpen className="h-4 w-4" />
                     <span className="hidden sm:inline">Diario</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
                   </Button>
                 </>
               ) : (
