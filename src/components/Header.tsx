@@ -1,7 +1,9 @@
-import { Camera, LogOut } from 'lucide-react';
+import { Camera, LogOut, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/constants';
 import AccountDropdown from './AccountDropdown';
 import MobileNav from './MobileNav';
 import ReconnectionBanner from './ReconnectionBanner';
@@ -20,8 +22,13 @@ const Header = ({
     role,
     loading: roleLoading
   } = useRole();
+  const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleGoHome = () => {
+    navigate(ROUTES.HOME);
   };
   const getRoleDisplay = () => {
     if (roleLoading) return '...';
@@ -61,6 +68,16 @@ const Header = ({
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-3">
+            {user && <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleGoHome}
+              className="text-sage-600 hover:text-sage-800 hover:bg-sage-50"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              <span className="hidden lg:inline">Inicio</span>
+            </Button>}
+            
             {user && <StreakCounter />}
             
             {user && role && <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor()}`}>

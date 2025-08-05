@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
-import { Menu, LogOut, Camera, Crown } from 'lucide-react';
+import { Menu, LogOut, Camera, Crown, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/constants';
 import StreakCounter from './StreakCounter';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +23,7 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
@@ -29,6 +32,11 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
 
   const handleAddMoment = () => {
     onAddMoment();
+    setIsOpen(false);
+  };
+
+  const handleGoHome = () => {
+    navigate(ROUTES.HOME);
     setIsOpen(false);
   };
 
@@ -85,6 +93,15 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
           <div className="flex justify-center">
             <StreakCounter />
           </div>
+          
+          <Button
+            onClick={handleGoHome}
+            variant="outline"
+            className="w-full border-sage-300 text-sage-600 hover:bg-sage-50 justify-start h-12 text-base"
+          >
+            <Home className="w-5 h-5 mr-3" />
+            Ir a Inicio
+          </Button>
           
           <Button
             onClick={handleAddMoment}
