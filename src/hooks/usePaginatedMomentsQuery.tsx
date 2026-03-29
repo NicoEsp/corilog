@@ -122,8 +122,6 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       return data;
     },
     onSuccess: async (newMoment) => {
-      console.log('✅ Momento creado exitosamente:', newMoment.id);
-      
       // Transform moment data
       const transformedMoment = {
         ...newMoment,
@@ -161,11 +159,9 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       
       // Update streak after successful moment creation
       try {
-        console.log('🔥 Actualizando racha para usuario:', user?.id);
         await updateStreak();
-        console.log('✅ Racha actualizada exitosamente');
       } catch (error) {
-        console.error('❌ Error actualizando racha:', error);
+        console.error('Error actualizando racha:', error);
       }
       
       toast({
@@ -196,13 +192,13 @@ export function usePaginatedMomentsQuery(initialPage = 1): UsePaginatedMomentsQu
       if (error) throw error;
       return momentId;
     },
-    onSuccess: () => {
+    onSuccess: (momentId: string) => {
       // Optimistic update
       queryClient.setQueryData(['moments', 'paginated', user?.id, currentPage], (oldData: any) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          data: oldData.data.filter((m: any) => m.id !== deleteMutation.variables),
+          data: oldData.data.filter((m: any) => m.id !== momentId),
           totalCount: oldData.totalCount - 1
         };
       });

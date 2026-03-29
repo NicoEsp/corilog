@@ -78,8 +78,6 @@ const AddMomentForm = memo(({ onSave, onCancel, isCreating = false }: AddMomentF
       const sanitizedNote = sanitizeNote(note);
       const safeDate = createSafeDate(date);
 
-      console.log('📝 Enviando nuevo momento desde el formulario');
-      
       onSave({
         title: sanitizedTitle,
         note: sanitizedNote,

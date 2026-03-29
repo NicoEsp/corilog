@@ -5,7 +5,6 @@ import { useRole } from '@/contexts/RoleContext';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/constants';
 import AccountDropdown from './AccountDropdown';
-import MobileNav from './MobileNav';
 import ReconnectionBanner from './ReconnectionBanner';
 import StreakCounter from './StreakCounter';
 interface HeaderProps {
@@ -97,15 +96,7 @@ const Header = ({
               </Button>}
           </div>
 
-          {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center gap-2">
-            <Button onClick={onAddMoment} className="bg-rose-600 hover:bg-rose-700 text-white shadow-sm" size="sm">
-              <Camera className="w-4 h-4 mr-1" />
-              <span className="text-sm">Nuevo</span>
-            </Button>
-            
-            <MobileNav onAddMoment={onAddMoment} />
-          </div>
+          {/* Mobile: logo area only — navigation handled by BottomNav + FAB */}
         </div>
       </header>
       
