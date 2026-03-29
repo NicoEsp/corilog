@@ -47,7 +47,6 @@ export const useInfiniteMomentsQuery = () => {
       
       // Solo migrar en development, nunca en production
       if (pageParam === 0 && !migrationCompleted && import.meta.env.DEV) {
-        console.log('Ejecutando migración única de localStorage (DEV only)');
         await MigrationService.migrateMomentsFromLocalStorage(user.id);
         migrationCompleted = true;
       }
@@ -85,8 +84,6 @@ export const useInfiniteMomentsQuery = () => {
       return MomentService.createMoment(user.id, momentData);
     },
     onMutate: async (newMoment) => {
-      console.log('🚀 Iniciando creación de momento - Feedback inmediato');
-      
       // Cancelar queries en curso
       await queryClient.cancelQueries({ queryKey: [MOMENTS_QUERY_KEY] });
 
@@ -138,8 +135,6 @@ export const useInfiniteMomentsQuery = () => {
       });
     },
     onSuccess: (newMoment) => {
-      console.log('✅ Momento creado exitosamente en el servidor');
-      
       if (newMoment) {
         // Actualizar con el momento real del servidor
         queryClient.setQueryData([MOMENTS_QUERY_KEY, user?.id], (old: any) => {
@@ -160,7 +155,6 @@ export const useInfiniteMomentsQuery = () => {
         // Solo actualizar streak si el momento es de hoy
         const isToday = new Date(newMoment.date).toDateString() === new Date().toDateString();
         if (user?.id && isToday) {
-          console.log('📈 Momento de hoy creado - Actualizando streak');
           queryClient.invalidateQueries({ queryKey: ['streakData', user.id] });
         }
 

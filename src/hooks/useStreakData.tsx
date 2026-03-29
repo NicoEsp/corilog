@@ -90,9 +90,7 @@ export const useStreakData = () => {
 
     try {
       const previousStreak = data?.userStreak?.current_streak || 0;
-      
-      console.log('🎯 Actualizando streak para usuario:', user.id);
-      
+
       // Call optimized backend function
       const { data: updatedStreakData, error } = await supabase.rpc(
         'update_user_streak_optimized',
@@ -103,8 +101,6 @@ export const useStreakData = () => {
         console.error('❌ Error actualizando streak:', error);
         throw error;
       }
-
-      console.log('📊 Streak actualizado:', updatedStreakData?.[0]);
 
       const updatedStreak = updatedStreakData?.[0];
       if (updatedStreak) {

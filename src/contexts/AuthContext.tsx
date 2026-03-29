@@ -186,32 +186,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setTimeout(() => {
                 // Importar queryClient en el callback para evitar dependencies
                 import('@/lib/queryClient').then(({ queryClient }) => {
-                  // Refetch específico de momentos con retry logic
-                  queryClient.refetchQueries({ 
-                    queryKey: ['moments', session.user.id],
-                    type: 'active'
-                  }).catch((error) => {
-                    logger.error('Failed to refetch moments after Google auth', 'google_auth_refetch', error);
-                    // Retry una vez más después de 1 segundo
-                    setTimeout(() => {
-                      queryClient.refetchQueries({ 
-                        queryKey: ['moments', session.user.id],
-                        type: 'active'
-                      });
-                    }, 1000);
+                  // Invalidar todas las queries de momentos (cubre tanto infinite como paginated)
+                  queryClient.invalidateQueries({
+                    queryKey: ['moments'],
+                    exact: false
                   });
-                  
+
                   // También refetch datos críticos
-                  queryClient.refetchQueries({ 
+                  queryClient.refetchQueries({
                     queryKey: ['streakData', session.user.id],
                     type: 'active'
                   });
-                  queryClient.refetchQueries({ 
+                  queryClient.refetchQueries({
                     queryKey: ['userStats', session.user.id],
                     type: 'active'
                   });
                 });
-              }, 500); // Aumentado a 500ms para mejor timing
+              }, 500);
             }
           }
         } catch (error) {

@@ -81,7 +81,7 @@ const MobileNav = ({ onAddMoment }: MobileNavProps) => {
         </Button>
       </SheetTrigger>
       
-      <SheetContent side="right" className="w-80 sm:w-96">
+      <SheetContent side="right" className="w-[85vw] sm:w-80 md:w-96">
         <SheetHeader className="text-left">
           <SheetTitle className="font-semibold text-sage-800">
             Menú
